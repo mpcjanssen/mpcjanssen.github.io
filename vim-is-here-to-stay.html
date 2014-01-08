@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link href='//fonts.googleapis.com/css?family=Noticia+Text:400,700' rel='stylesheet' type='text/css' />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title> VIM is here to stay | The knights who say NIH! </title>
+
+    <link rel="stylesheet" href="/theme/css/style.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/css/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/css/font-awesome.css" type="text/css"/>
+  </head>
+  <body>
+    <div class=container>
+
+      <div class=navigation>
+        <ul>
+            <li><a href="/index.html">Blog</a> </li>
+            <li><a href="/tags.html">Tags</a> </li>
+            <li><a href="/pages/simpletask.html">Simpletask</a> </li>
+            <li><a href="/redmine/">Tracker</a> </li>
+            <li><a href="/pages/code.html">Code</a> </li>
+        </ul>
+      </div>
+      <div class=separator></div>        
+        <div class=body>
+    <h1 class="title"> VIM is here to stay</h1>
+    <p class=date> wo 18 december 2013 </p>
+    <p>After doing a bit more reading on the subject, it turns out that not only Sublime Text (ST) is closed, it is also very expensive and might disappear any time. I am not willing to build my workflow around tools like that. A sentiment <a class="reference external" href="http://lifehacker.com/yahoo-announced-today-that-much-loved-to-do-app-astrid-686450404">Astrid</a> user should appreciate.</p>
+<p>However I do think Sublime text has some very nice features. Below I will discuss several ways to transfer these items to vim.</p>
+<div class="section" id="the-project-approach">
+<h2>The Project approach</h2>
+<p>A nice feature of ST is the project approach. It would be very nice to have VIM take into account you project structure and allow easy reference to the project root. Currently I have implemented this using the <a class="reference external" href="https://github.com/MarcWeber/vim-addon-local-vimrc">local vimrc</a> plugin. This plugin will read a <cite>.vimrc</cite> in the current directory or any of the parent directories.</p>
+<p>You can then put a <cite>.vimrc</cite> in the root of your project to add project specific customisations.
+For the Simpletask Android project I am currently using the following:</p>
+<div class="highlight"><pre><span class="c">&quot; vimrc in project root</span>
+<span class="c">&quot; loaded by https://github.com/MarcWeber/vim-addon-local-vimrc</span>
+
+<span class="k">set</span> <span class="k">tags</span><span class="p">=</span><span class="k">tags</span>;/
+<span class="k">let</span> <span class="k">s</span>:script_path <span class="p">=</span> expand<span class="p">(</span><span class="s1">&#39;&lt;sfile&gt;:p:h&#39;</span><span class="p">)</span> . <span class="s2">&quot;/&quot;</span>
+<span class="k">let</span> <span class="k">g</span>:ctrlp_custom_ignore <span class="p">=</span> {
+  \ <span class="s1">&#39;dir&#39;</span>:  <span class="s1">&#39;\vbuild$&#39;</span><span class="p">,</span>
+  \ }
+
+<span class="nb">nnoremap</span> <span class="p">&lt;</span>leader<span class="p">&gt;</span><span class="k">f</span> :<span class="k">call</span> FuzzyFindFromProjectRoot<span class="p">()&lt;</span>CR<span class="p">&gt;</span>
+
+<span class="k">function</span><span class="p">!</span> FuzzyFindFromProjectRoot<span class="p">()</span>
+    execute <span class="s2">&quot;CtrlP &quot;</span>.<span class="k">s</span>:script_path
+<span class="k">endfunction</span>
+
+<span class="k">function</span><span class="p">!</span> ExecuteInProjectRoot<span class="p">(</span>cmdline<span class="p">)</span>
+     execute <span class="s2">&quot;:cd &quot;</span>.<span class="k">s</span>:script_path
+     execute <span class="s2">&quot;:!start cmd /c &quot;</span>.<span class="k">a</span>:cmdline
+<span class="k">endfunction</span>
+
+<span class="k">function</span><span class="p">!</span> AndroidMonitor<span class="p">()</span>
+    <span class="k">let</span> <span class="k">l</span>:<span class="k">filename</span> <span class="p">=</span> <span class="k">s</span>:script_path.<span class="s2">&quot;local.properties&quot;</span>
+    execute <span class="s2">&quot;vimgrep /\\v^sdk\\.dir=(.*)\s*$/j &quot;</span>.<span class="k">l</span>:<span class="k">filename</span>
+    <span class="k">for</span> <span class="k">i</span> <span class="k">in</span> getqflist<span class="p">()</span>
+        echo <span class="s2">&quot;found &quot;</span>. <span class="k">i</span>.text
+        <span class="k">let</span> <span class="k">l</span>:cmd <span class="p">=</span> split<span class="p">(</span><span class="k">i</span>.text<span class="p">,</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>[<span class="m">1</span>]
+        execute <span class="s2">&quot;:!start cmd /c &quot;</span> . <span class="k">l</span>:cmd . <span class="s2">&quot;\\tools\\monitor.bat&quot;</span>
+        <span class="k">break</span>
+    <span class="k">endfor</span>
+<span class="k">endfunction</span>
+
+command<span class="p">!</span> <span class="p">-</span>nargs<span class="p">=</span><span class="m">1</span> ExecuteInProjectRoot :<span class="k">call</span> ExecuteInProjectRoot<span class="p">(&lt;</span><span class="k">f</span><span class="p">-</span>args<span class="p">&gt;)</span>
+command<span class="p">!</span> InstallFreeRelease :<span class="k">call</span> ExecuteInProjectRoot<span class="p">(</span><span class="s2">&quot;gradlew installFreeRelease&quot;</span><span class="p">)</span>
+command<span class="p">!</span> UpdateCTags :<span class="k">call</span> ExecuteInProjectRoot<span class="p">(</span><span class="s2">&quot;ctags&quot;</span><span class="p">)</span>
+command<span class="p">!</span> AndroidMonitor :<span class="k">call</span> AndroidMonitor<span class="p">()</span>
+</pre></div>
+<p>The real intelligence is in the line:</p>
+<div class="highlight"><pre><span class="k">let</span> <span class="k">s</span>:script_path <span class="p">=</span> expand<span class="p">(</span><span class="s1">&#39;:p:h&#39;</span><span class="p">)</span> . <span class="s2">&quot;/&quot;</span>
+</pre></div>
+<p>This stores the path of the <cite>.vimrc</cite> file in the project root so it can be used from other parts of the script. A nice example of how this can be useful is by the <cite>&lt;leader&gt;f</cite> map which starts FuzzyFinder from the root of the project regardless of what the current directory in the project is.</p>
+</div>
+<div class="section" id="navigating-with-tags">
+<h2>Navigating with tags</h2>
+<p>This covers part of the <cite>Ctrl-P</cite> functionality from ST, however another great
+feature is the ability to quickly navigate to a certain spot within a file
+using the <cite>&#64;</cite> syntax. FuzzyFinder supports the brilliant <cite>FufTag</cite> which uses
+the built-in VIM support for tags to navigate in files. This does need some
+additional setup to make it work nicely though.</p>
+<p>In the Simpletask Android project I only want FuzzyFinder to display tags in
+the project. To achieve this I add the line:</p>
+<div class="highlight"><pre><span class="k">set</span> <span class="k">tags</span><span class="p">=</span><span class="k">tags</span>;/
+</pre></div>
+<p>to the project specific <cite>.vimrc</cite>. This means that VIM will look for the tags
+file with the name <cite>tags</cite> in this or any parent directory. To create this file
+I use <a class="reference external" href="http://ctags.sourceforge.net/">Exuberant CTags</a>  in combination with the
+<cite>:UpdateCTags</cite> command as defined in the project <cite>.vimrc</cite>.</p>
+<p>Without some additional configuration of CTags this will not work, because:</p>
+<ul class="simple">
+<li>Ctags by default doesn't scan recursively</li>
+<li>Ctags by default doesn't pick up definitions in string or layout resources.</li>
+</ul>
+<p>This can be remedied by adding a <cite>.ctags</cite> file in the root of the project with
+the following contents:</p>
+<div class="highlight"><pre>--langdef<span class="o">=</span>XML
+--langmap<span class="o">=</span>XML:.xml
+--regex-XML<span class="o">=</span>/id<span class="o">=</span><span class="s2">&quot;([a-zA-Z0-9_]+)&quot;</span>/<span class="se">\1</span>/d,definition/
+--regex-XML<span class="o">=</span>/name<span class="o">=</span><span class="s2">&quot;([a-zA-Z0-9_]+)&quot;</span>/<span class="se">\1</span>/d,definition/
+--regex-XML<span class="o">=</span>/id<span class="o">=</span><span class="s2">&quot;@\+id\/([a-zA-Z0-9_]+)&quot;</span>/<span class="se">\1</span>/d,definition/
+--exclude<span class="o">=</span>build
+--recurse<span class="o">=</span>yes
+</pre></div>
+<p>Besides recursively scanning, this also ignores the <cite>build</cite> directory, because
+I generally don't need to switch to build artifacts and <cite>R.java</cite> clutters up
+the results.</p>
+<div class="tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">It makes sense to map the <cite>FufTag</cite> command to a leader map (I use <cite>&lt;leader&gt;t</cite>)</p>
+</div>
+<p>If you make any changes in the structure of the project, the <cite>ctags</cite> file can
+be updated, by calling the <cite>UpdateCTags</cite> command.</p>
+</div>
+<div class="section" id="using-build-variants">
+<h2>Using build variants</h2>
+<p>Coming soon</p>
+</div>
+<div class="section" id="setting-up-vimrc">
+<h2>Setting up .vimrc</h2>
+<p>Coming soon.</p>
+</div>
+
+    
+<div class=twitter>
+<a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+</div>
+    <p class=tags>This entry was tagged as
+      <a href="/tag/vim.html">vim</a>
+    </p>
+ 
+ 
+        </div>
+        
+<div class=footer>
+  <p>&copy; Copyright <script language="JavaScript">var date = new Date(); document.write(date.getFullYear());</script> by Mark Janssen</p>
+  <p> Powered by <a href="http://pypi.python.org/pypi/pelican/" target="_blank">Pelican</a>.  
+    <a href="https://github.com/fjavieralba/flasky">Theme</a>  by <a href="http://fjavieralba.com">fjavieralba</a>
+  </p> 
+  <p>
+    <div class=social style="font-size: 27px;">
+      <ul>
+        <script language="JavaScript">
+          u = 'mpc.janssen';
+          s = 'gmail.com';
+          document.write('<a href=\"mailto:' + u + '@' + s + '\" target=\"_blank\">');
+        </script>
+            <li><i class="icon-envelope icon-large"></i> </li>
+        </a>
+        <a href="http://twitter.com/MPCtje" target="_blank"> <li> <i class="icon-twitter-sign icon-large"> </li></i> </a>
+        <a href="https://www.linkedin.com/pub/mark-janssen/1/2a7/44"><li><i class="icon-linkedin-sign icon-large" ></i></li></a>
+        <a href="http://github.com/mpcjanssen" target="_blank"> <li> <i class="icon-github-sign icon-large"></i> </li> </a>
+        <a href="/feeds/all.atom.xml" rel="alternate" title="Recent Blog Posts"><li> <i class="icon-rss icon-large"></i> </li></a>
+      </ul>
+    </div>
+  </p>
+</div>    </div>
+  </body>
+</html>
