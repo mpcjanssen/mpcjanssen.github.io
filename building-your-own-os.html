@@ -6,26 +6,24 @@
     
     <title> Building your own OS | The knights who say NIH! </title>
 
-    <link rel="stylesheet" href="//www.mpcjanssen.nl/theme/css/style.css" type="text/css" />
-    <link rel="stylesheet" href="//www.mpcjanssen.nl/theme/css/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="//www.mpcjanssen.nl/theme/css/font-awesome.css" type="text/css"/>
+    <link rel="stylesheet" href="/theme/css/style.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/css/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/css/font-awesome.css" type="text/css"/>
   </head>
   <body>
     <div class=container>
 
       <div class=navigation>
         <ul>
-            <li><a href="//www.mpcjanssen.nl/index.html">Blog</a> </li>
-            <li><a href="//www.mpcjanssen.nl/tags.html">Tags</a> </li>
-            <li><a href="//www.mpcjanssen.nl/pages/simpletask.html">Simpletask</a> </li>
-            <li><a href="//www.mpcjanssen.nl/redmine/">Tracker</a> </li>
-            <li><a href="//www.mpcjanssen.nl/pages/code.html">Code</a> </li>
+            <li><a href="/index.html">Blog</a> </li>
+            <li><a href="/tags.html">Tags</a> </li>
+            <li><a href="/pages/mark-janssen.html">Resume</a> </li>
         </ul>
       </div>
       <div class=separator></div>        
         <div class=body>
     <h1 class="title"> Building your own OS</h1>
-    <p class=date> di 28 maart 2000 </p>
+    <p class=date> Tue 28 March 2000 </p>
     <p>If you want to make your own OS and you like all clear cut code which compiles and does everything you would have ever wanted well then look further (go see Linux). But if you want to build your own OS including booting, switching to PM etcetera etcetera, then this is the place to be!</p>
 <p>Recently I started my own attempt at writing an OS, well you can't exactly call it that right now, it only boots from
 a floppy and switches to Protected Mode right now, but that was hard enough to figure out.</p>
@@ -84,10 +82,10 @@ If this signature is found, sector 0 (the boot sector which is 200h=512 bytes bi
 at location <cite>0000:7C00h</cite> and control is transferred to this address.  Well that wasn't so hard, was it ?
 So lets try to
 write or own boot sector which only displays:</p>
-<div class="highlight"><pre>NO BOOT DISK
+<div class="highlight"><pre><span></span>NO BOOT DISK
 </pre></div>
 <p>and then totally freezes.  (to keep it simple) Here we go:</p>
-<div class="highlight"><pre><span class="c1">;------------------------------------------------------------------------------------------</span>
+<div class="highlight"><pre><span></span><span class="c1">;------------------------------------------------------------------------------------------</span>
 <span class="c1">; dumbboot.asm</span>
 <span class="c1">; demonstrates getting control after the compu has booted</span>
 <span class="c1">; does nothing but display &quot;NO BOOT DISK&quot;  and freeze</span>
@@ -237,7 +235,7 @@ fix that! The fields in the bootsector are defined as follows:</p>
 <p>OK that seems pretty straightforward, so let's try to put it to practice.
 In the following piece of
 code I am assuming you use a 3,5&quot; HD disk.</p>
-<div class="highlight"><pre><span class="c1">;------------------------------------------------------------------------------------------</span>
+<div class="highlight"><pre><span></span><span class="c1">;------------------------------------------------------------------------------------------</span>
 <span class="c1">; dosboot.asm</span>
 <span class="c1">; demonstrates getting control after the compu has booted</span>
 <span class="c1">; does nothing but display &quot;NO BOOT DISK&quot;  and freeze</span>
@@ -309,11 +307,9 @@ on your system? Because even the newest processor had to be able to
 execute the 8086's code it
 had to operate in the same way. This means you only had 20-bit addresses
 giving a total accessible
-memory of <span class="formula">2<sup>20</sup> = 1<i>MB</i></span>
-, even if you had 40 MB plugged in your
+memory of <span class="formula">2<sup>20</sup> = 1<i>MB</i></span>, even if you had 40 MB plugged in your
 system. On a pentium however we have a 32-bits wide
-address bus which gives a theoretical address space of <span class="formula">2<sup>32</sup> = 4<i>GB</i></span>
-!</p>
+address bus which gives a theoretical address space of <span class="formula">2<sup>32</sup> = 4<i>GB</i></span>!</p>
 <p>How can we access al this additional memory. Well we have to leave the
 8086's  real mode and switch
 to the incredible Protected Mode.
@@ -330,8 +326,7 @@ compatibility with the 8086 and some extra features (such as extended
 registers, faster instructions  ,additional instructions etc. etc.).</p>
 <p>In this mode memory is divided in segments of 64 KB (16 bits) with a total
 addressable space
-of <span class="formula">2<sup>20</sup> = 1024<i>KB</i></span>
-. Memory locations are accessed through a
+of <span class="formula">2<sup>20</sup> = 1024<i>KB</i></span>. Memory locations are accessed through a
 segment:offset
 address (the so called <em>logical address</em>). Calculation of the
 <em>physical address</em> (the actual byte number in memory) is performed in
@@ -342,15 +337,13 @@ following way:</p>
 </div>
 <p>For example if we take segment 9000h and offset 8000h (logical address
 9000:8000h) we get physical
-address <span class="formula">9000<i>h</i>*10<i>h</i> + 8000<i>h</i> = 90000<i>h</i> + 8000<i>h</i> = 98000<i>h</i></span>
-. (Note that this address
+address <span class="formula">9000<i>h</i>*10<i>h</i> + 8000<i>h</i> = 90000<i>h</i> + 8000<i>h</i> = 98000<i>h</i></span>. (Note that this address
 refers to
 the same physical memory location as for instance 9300:5000h so segments
 overlap in real mode)
 To access different segments, 16-bit segment registers (such as cs, ds and
 es) are used so that
-the maximum address is <span class="formula"><i>FFFF</i>:000<i>Fh</i> = <i>FFFFFh</i><i>physical</i> = 2<sup>20</sup></span>
-.</p>
+the maximum address is <span class="formula"><i>FFFF</i>:000<i>Fh</i> = <i>FFFFFh</i><i>physical</i> = 2<sup>20</sup></span>.</p>
 <p>The
 maximal address accessable address would be  FFFF:FFFFh = 10FFEFh
 physical, but this can't be expressed in 20 bits. However if we find a way
@@ -465,8 +458,7 @@ a segment can be 4 GB long this is
 achieved by setting the G bit.</p>
 </li>
 <li><p class="first">G: If this bit is set the actual segment size is the limit times 4 KB
-(<span class="formula">1<i>MB</i>*4<i>K</i> = 4<i>GB</i></span>
-), if this flag
+(<span class="formula">1<i>MB</i>*4<i>K</i> = 4<i>GB</i></span>), if this flag
 is clear the size of the segment is the limit in bytes. So for segments
 bigger than 1 MB the size
 must be a mutiple of 4 KB, but this is no real restriction.</p>
@@ -677,7 +669,7 @@ segments of 4 GB, a code and a data segment, which completely overlap in
 memory. (So it is still possible, though not advisable, to write self
 modifying
 code):</p>
-<div class="highlight"><pre><span class="nf">gdtr</span>                               <span class="c1">;this will be loaded in the GDTR</span>
+<div class="highlight"><pre><span></span><span class="nf">gdtr</span>                               <span class="c1">;this will be loaded in the GDTR</span>
    <span class="kd">dw</span> <span class="nv">gdt_end</span><span class="o">-</span><span class="nv">gdt</span><span class="o">-</span><span class="mi">1</span>                <span class="c1">;length of gdt</span>
    <span class="kd">dd</span> <span class="nv">gdt</span>                          <span class="c1">;linear, physical address of gdt</span>
 
@@ -863,7 +855,7 @@ some comments) I think Tran originally wrote this code for use in his
 PMode protected mode wrapper. The piece of code conains a function
 EnableA20 which should do exactly that. So here we go:
 &lt;/p&gt;</p>
-<div class="highlight"><pre> <span class="nl">enablea20kbwait:</span>                      <span class="c1">;wait for safe to write to 8042</span>
+<div class="highlight"><pre><span></span> <span class="nl">enablea20kbwait:</span>                      <span class="c1">;wait for safe to write to 8042</span>
     <span class="nf">xor</span> <span class="nb">cx</span><span class="p">,</span><span class="nb">cx</span>                          <span class="c1">;loop a maximum of FFFFh times</span>
  <span class="nl">enablea20kbwaitl0:</span>
     <span class="nf">jmp</span> <span class="nv">short</span> <span class="kc">$</span><span class="o">+</span><span class="mi">2</span>                      <span class="c1">;these three jumps are inserted to</span>
@@ -1181,22 +1173,9 @@ automated).
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
 </div>
     <p class=tags>This entry was tagged as
-      <a href="//www.mpcjanssen.nl/tag/nasm.html">nasm</a>
+      <a href="/tag/nasm.html">nasm</a>
     </p>
  
-    <div id="disqus_thread"></div>
-    <script type="text/javascript">
-    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-    var disqus_shortname = 'mpcjanssen'; // required: replace example with your forum shortname
-    /* * * DON'T EDIT BELOW THIS LINE * * */
-    (function() {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-    <a href="//disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a>
  
         </div>
         
@@ -1218,7 +1197,7 @@ automated).
         <a href="http://twitter.com/MPCtje" target="_blank"> <li> <i class="icon-twitter-sign icon-large"> </li></i> </a>
         <a href="https://www.linkedin.com/pub/mark-janssen/1/2a7/44"><li><i class="icon-linkedin-sign icon-large" ></i></li></a>
         <a href="http://github.com/mpcjanssen" target="_blank"> <li> <i class="icon-github-sign icon-large"></i> </li> </a>
-        <a href="//www.mpcjanssen.nl/feeds/all.atom.xml" rel="alternate" title="Recent Blog Posts"><li> <i class="icon-rss icon-large"></i> </li></a>
+        <a href="/feeds/all.atom.xml" rel="alternate" title="Recent Blog Posts"><li> <i class="icon-rss icon-large"></i> </li></a>
       </ul>
     </div>
   </p>
