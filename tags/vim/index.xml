@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Vim on The knights who say NIH!</title>
+    <link>/tags/vim/index.xml</link>
+    <description>Recent content in Vim on The knights who say NIH!</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="/tags/vim/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>From Vim to Emacs and back again</title>
+      <link>/post/back-to-vim/</link>
+      <pubDate>Wed, 05 Mar 2014 00:00:00 +0000</pubDate>
+      
+      <guid>/post/back-to-vim/</guid>
+      <description>
+
+&lt;p&gt;This is the story of how I moved from Vim to Emacs and then back again.
+It&amp;rsquo;s a story of modes, plugins, stock configs, mobile devices and
+eBooks.&lt;/p&gt;
+
+&lt;h2 id=&#34;why-switch-to-emacs&#34;&gt;Why switch to Emacs?&lt;/h2&gt;
+
+&lt;p&gt;My initial interest for Emacs was triggered by a blog post about
+org-mode. Org mode looked like the plain text productivity solution I
+had been looking for for a long time. Apart from everything being plain
+text based, the functionality offered covered most of my bases. Not only
+is it a terrific outliner, it&amp;rsquo;s also a very good todo list, note taking
+app and publishing solution. For my blog I was using pelican and for my
+Android app I was generating separate versions of the documentation (one
+for on the web, one for in app). The switch to emacs with org mode
+allowed me to have one set of master files in org format, which where
+then &lt;code&gt;org-publish&lt;/code&gt;{.sourceCode}-ed to the different target formats.&lt;/p&gt;
+
+&lt;p&gt;This approach served me quite well. There were some lingering doubts
+though.&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Publishig to my blog was not as frictionless as it used to be
+with pelican.&lt;/li&gt;
+&lt;li&gt;I liked the reStructuredText format better, which is simple when
+possible and allows advanced use when needed.&lt;/li&gt;
+&lt;li&gt;I missed Vim&amp;rsquo;s modal editing. Emacs evil doesn&amp;rsquo;t seem to be a good
+replacement for me. It mixes two paradigms, which I find
+very confusing.&lt;/li&gt;
+&lt;li&gt;Vim works better on my Android tablet and phones. The port is more
+stable than the Emacs one. And Vim&amp;rsquo;s modal nature makes it easier to
+use with limited keyboards.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;what-were-my-problems-with-vim&#34;&gt;What were my problems with Vim?&lt;/h2&gt;
+
+&lt;p&gt;My problems with Vim were two fold.&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;No org-mode. I really love org-mode.&lt;/li&gt;
+&lt;li&gt;Too many plugins: In order to replicate Sublime Text and Emacs
+features, the number of plugins I used increased. This makes it
+difficult to drag my Vim config around to places which don&amp;rsquo;t have
+git (such as my phone or tablet).&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;how-i-switched-back&#34;&gt;How I switched back&lt;/h2&gt;
+
+&lt;p&gt;I decided to try to fix both shortcomings. Even though Vim doesn&amp;rsquo;t have
+org-mode I already have a great task manager in Simpletask. And notes
+can easily be kept in .rst files.&lt;/p&gt;
+
+&lt;p&gt;The second point was a bigger deal, but after re-reading &lt;em&gt;Practical Vim&lt;/em&gt;
+it finally clicked. I was trying to mold Vim into something it wasn&amp;rsquo;t (a
+SublimeText clone). Since then I have gone cold turkey on the plugins
+and I am quite happy with it, even though it does take some getting used
+to.&lt;/p&gt;
+
+&lt;p&gt;The fact that VimL is not a language I enjoy using is unchanged, but
+because I only use Vim now to edit text, that&amp;rsquo;s less of an issue.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="generator" content="Hugo 0.33-DEV" />
+
+  <title>VIM is here to stay &middot; The knights who say NIH!</title>
+
+  
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/pure-min.css">
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/grids-responsive-old-ie-min.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/grids-responsive-min.css">
+  <!--<![endif]-->
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="/css/side-menu-old-ie.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="/css/side-menu.css">
+  <!--<![endif]-->
+
+  <link rel="stylesheet" href="/css/blackburn.css">
+
+  
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+  
+  <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet" type="text/css">
+
+  
+  
+
+  
+
+  <link rel="shortcut icon" href="/img/favicon.ico" type="image/x-icon" />
+
+  
+  
+
+</head>
+
+
+<body>
+<div id="layout">
+
+  
+<a href="#menu" id="menuLink" class="menu-link">
+  
+  <span></span>
+</a>
+<div id="menu">
+
+  
+
+  <div class="pure-menu">
+    <ul class="pure-menu-list">
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/post/"><i class='fa fa-list fa-fw'></i>Posts</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/tags/"><i class='fa fa-tags fa-fw'></i>Tags</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/about/"><i class='fa fa-user fa-fw'></i>About</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/"><i class='fa fa-home fa-fw'></i>Home</a>
+      
+        </li>
+      
+    </ul>
+  </div>
+
+  <div class="pure-menu social">
+  <ul class="pure-menu-list">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <li class="pure-menu-item">
+      <a class="pure-menu-link" href="https://github.com/mpcjanssen" target="_blank"><i class="fa fa-github-square fa-fw"></i>GitHub</a>
+    </li>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  </ul>
+</div>
+
+
+  <div>
+  <div class="small-print">
+    <small></small>
+  </div>
+  <div class="small-print">
+    <small>Built with&nbsp;<a href="https://gohugo.io/" target="_blank">Hugo</a></small>
+    <small>Theme&nbsp;<a href="https://github.com/yoshiharuyamashita/blackburn" target="_blank">Blackburn</a></small>
+  </div>
+</div>
+
+</div>
+
+
+  <div id="main">
+
+
+<div class="header">
+  <h1>VIM is here to stay</h1>
+  <h2></h2>
+</div>
+<div class="content">
+
+  <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>18 Dec 2013</time>
+  </div>
+
+  
+
+  
+
+  
+
+</div>
+
+  
+
+<p>After doing a bit more reading on the subject, it turns out that not
+only Sublime Text (ST) is closed, it is also very expensive and might
+disappear any time. I am not willing to build my workflow around tools
+like that. A sentiment
+<a href="http://lifehacker.com/yahoo-announced-today-that-much-loved-to-do-app-astrid-686450404">Astrid</a>
+user should appreciate.</p>
+
+<p>However I do think Sublime text has some very nice features. Below I
+will discuss several ways to transfer these items to vim.</p>
+
+<h2 id="the-project-approach">The Project approach</h2>
+
+<p>A nice feature of ST is the project approach. It would be very nice to
+have VIM take into account you project structure and allow easy
+reference to the project root. Currently I have implemented this using
+the <a href="https://github.com/MarcWeber/vim-addon-local-vimrc">local vimrc</a>
+plugin. This plugin will read a .vimrc in the current directory or any
+of the parent directories.</p>
+
+<p>You can then put a .vimrc in the root of your project to add project
+specific customisations. For the Simpletask Android project I am
+currently using the following:</p>
+
+<pre><code class="language-vim">&quot; vimrc in project root
+&quot; loaded by https://github.com/MarcWeber/vim-addon-local-vimrc
+
+set tags=tags;/
+let s:script_path = expand('&lt;sfile&gt;:p:h') . &quot;/&quot; 
+let g:ctrlp_custom_ignore = {
+  \ 'dir':  '\vbuild$',
+  \ }
+
+nnoremap &lt;leader&gt;f :call FuzzyFindFromProjectRoot()&lt;CR&gt;
+
+function! FuzzyFindFromProjectRoot()
+    execute &quot;CtrlP &quot;.s:script_path
+endfunction
+
+function! ExecuteInProjectRoot(cmdline)
+     execute &quot;:cd &quot;.s:script_path
+     execute &quot;:!start cmd /c &quot;.a:cmdline
+endfunction
+
+function! AndroidMonitor()
+    let l:filename = s:script_path.&quot;local.properties&quot;
+    execute &quot;vimgrep /\\v^sdk\\.dir=(.*)\s*$/j &quot;.l:filename
+    for i in getqflist()
+        echo &quot;found &quot;. i.text
+        let l:cmd = split(i.text,&quot;=&quot;)[1]
+        execute &quot;:!start cmd /c &quot; . l:cmd . &quot;\\tools\\monitor.bat&quot;
+        break
+    endfor
+endfunction
+
+command! -nargs=1 ExecuteInProjectRoot :call ExecuteInProjectRoot(&lt;f-args&gt;)
+command! InstallFreeRelease :call ExecuteInProjectRoot(&quot;gradlew installFreeRelease&quot;)
+command! UpdateCTags :call ExecuteInProjectRoot(&quot;ctags&quot;)
+command! AndroidMonitor :call AndroidMonitor()
+</code></pre>
+
+<p>The real intelligence is in the line:</p>
+
+<pre><code class="language-vim">let s:script_path = expand(':p:h') . &quot;/&quot;
+</code></pre>
+
+<p>This stores the path of the .vimrc file in the project root so it can be
+used from other parts of the script. A nice example of how this can be
+useful is by the &lt;leader&gt;f map which starts FuzzyFinder from the
+root of the project regardless of what the current directory in the
+project is.</p>
+
+<h2 id="navigating-with-tags">Navigating with tags</h2>
+
+<p>This covers part of the Ctrl-P functionality from ST, however another
+great feature is the ability to quickly navigate to a certain spot
+within a file using the @ syntax. FuzzyFinder supports the brilliant
+FufTag which uses the built-in VIM support for tags to navigate in
+files. This does need some additional setup to make it work nicely
+though.</p>
+
+<p>In the Simpletask Android project I only want FuzzyFinder to display
+tags in the project. To achieve this I add the line:</p>
+
+<pre><code class="language-vim">set tags=tags;/
+</code></pre>
+
+<p>to the project specific .vimrc. This means that VIM will look for the
+tags file with the name tags in this or any parent directory. To create
+this file I use <a href="http://ctags.sourceforge.net/">Exuberant CTags</a> in
+combination with the :UpdateCTags command as defined in the project
+.vimrc.</p>
+
+<p>Without some additional configuration of CTags this will not work,
+because:</p>
+
+<ul>
+<li>Ctags by default doesn&rsquo;t scan recursively</li>
+<li>Ctags by default doesn&rsquo;t pick up definitions in string or
+layout resources.</li>
+</ul>
+
+<p>This can be remedied by adding a .ctags file in the root of the project
+with the following contents:</p>
+
+<pre><code class="language-ini">--langdef=XML
+--langmap=XML:.xml
+--regex-XML=/id=&quot;([a-zA-Z0-9_]+)&quot;/\1/d,definition/
+--regex-XML=/name=&quot;([a-zA-Z0-9_]+)&quot;/\1/d,definition/
+--regex-XML=/id=&quot;@\+id\/([a-zA-Z0-9_]+)&quot;/\1/d,definition/
+--exclude=build
+--recurse=yes
+</code></pre>
+
+<p>Besides recursively scanning, this also ignores the build directory,
+because I generally don&rsquo;t need to switch to build artifacts and R.java
+clutters up the results.</p>
+
+<blockquote>
+<p><strong>tip</strong></p>
+
+<p>It makes sense to map the FufTag command to a leader map (I use
+&lt;leader&gt;t)</p>
+</blockquote>
+
+<p>If you make any changes in the structure of the project, the ctags file
+can be updated, by calling the UpdateCTags command.</p>
+
+<h2 id="using-build-variants">Using build variants</h2>
+
+<p>Coming soon</p>
+
+<h2 id="setting-up-vimrc">Setting up .vimrc</h2>
+
+<p>Coming soon.</p>
+
+
+  
+<div class="prev-next-post pure-g">
+  <div class="pure-u-1-24" style="text-align: left;">
+    
+    <a href="/post/saying-goodbye-to-vim/"><i class="fa fa-chevron-left"></i></a>
+    
+  </div>
+  <div class="pure-u-10-24">
+    
+    <nav class="prev">
+      <a href="/post/saying-goodbye-to-vim/">Saying goodbye to VIM?</a>
+    </nav>
+    
+  </div>
+  <div class="pure-u-2-24">
+    &nbsp;
+  </div>
+  <div class="pure-u-10-24">
+    
+    <nav class="next">
+      <a href="/post/moved-to-pelican/">Site moved to Pelican</a>
+    </nav>
+    
+  </div>
+  <div class="pure-u-1-24" style="text-align: right;">
+    
+    <a href="/post/moved-to-pelican/"><i class="fa fa-chevron-right"></i></a>
+    
+  </div>
+</div>
+
+
+
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'mpcjanssen';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+</div>
+
+</div>
+</div>
+<script src="/js/ui.js"></script>
+
+
+
+
+</body>
+</html>
+

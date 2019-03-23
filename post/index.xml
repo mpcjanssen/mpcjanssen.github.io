@@ -1,0 +1,1493 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on The knights who say NIH!</title>
+    <link>/post/index.xml</link>
+    <description>Recent content in Posts on The knights who say NIH!</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 12 Aug 2017 12:12:55 +0200</lastBuildDate>
+    <atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Using open source for free tasks</title>
+      <link>/post/free-tasks/</link>
+      <pubDate>Sat, 12 Aug 2017 12:12:55 +0200</pubDate>
+      
+      <guid>/post/free-tasks/</guid>
+      <description>
+
+&lt;h2 id=&#34;why-all-the-effort&#34;&gt;Why all the effort?&lt;/h2&gt;
+
+&lt;p&gt;Online task lists are dissappearing left and right (for example Astrid and Wunderlist). You want your tasks under your control which means:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;You have an open file format storing the tasks.&lt;/li&gt;
+&lt;li&gt;You can synchronize or serve the tasks with open source tools.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;I started with &lt;code&gt;todo.txt&lt;/code&gt; to store my tasks. This works fine, but a format like &lt;code&gt;todo.txt&lt;/code&gt; has one big disadvantage: it doesn&amp;rsquo;t have a concept of task identity so any syncing solution is flaky.&lt;/p&gt;
+
+&lt;p&gt;After some searching I found &lt;a href=&#34;https://taskwarrior.org/&#34;&gt;Taskwarrior&lt;/a&gt; which not only provides a flexible plain text task storage solution, but it also provide a very robust syncing solution with &lt;code&gt;taskd&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;the-set-up&#34;&gt;The set-up&lt;/h2&gt;
+
+&lt;p&gt;I use my own taskd server on a Archlinux based VPS. For now I try to stay away from user defined attributes (UDAs) as much as possible to keep the setup simple.&lt;/p&gt;
+
+&lt;h2 id=&#34;accessing-the-tasks&#34;&gt;Accessing the tasks&lt;/h2&gt;
+
+&lt;h3 id=&#34;linux-cli&#34;&gt;Linux CLI&lt;/h3&gt;
+
+&lt;p&gt;For linux installing the taskwarrior cli app provides a very good interface. There are also some other interfaces such as &lt;a href=&#34;https://tasktools.org/projects/vit.html&#34;&gt;VIT&lt;/a&gt; or &lt;a href=&#34;https://tasktools.org/projects/tasksh.html&#34;&gt;tasksh&lt;/a&gt; for review.&lt;/p&gt;
+
+&lt;h3 id=&#34;windows-cli&#34;&gt;Windows CLI&lt;/h3&gt;
+
+&lt;p&gt;For windows the &lt;code&gt;task&lt;/code&gt; CLI works fine when using the Windows Subsystem For Linux. One disadvantage of this is that you can&amp;rsquo;t access the Linux subsystem commands from a normal Windows command prompt.&lt;/p&gt;
+
+&lt;p&gt;To allow this I use a small wrapper executable:&lt;/p&gt;
+
+
+
+import os
+import sequtils
+import strutils
+
+# escape arguments for bash
+var cmdArgs =  commandLineParams().map(proc (s: string): string = r&#34;$&#39;&#34; &amp; s.replace(r&#34;&#39;&#34;,r&#34;\&#39;&#34;) &amp; &#34;&#39;&#34;).join(&#34; &#34;)
+var shellCmd = r&#34;bash -c &#34;&#34;task &#34;  &amp; cmdArgs &amp; &#34;\&#34;&#34;
+quit(os.execShellCmd(shellCmd))
+
+
+
+&lt;h3 id=&#34;web-interface&#34;&gt;Web interface&lt;/h3&gt;
+
+&lt;p&gt;As a web interface I used &lt;a href=&#34;http://inthe.am&#34;&gt;inthe.am&lt;/a&gt; but even though the code is open source, that site is not under my control and thus could disappear at any time.&lt;/p&gt;
+
+&lt;p&gt;Instead I now use &lt;a href=&#34;https://github.com/theunraveler/taskwarrior-web&#34;&gt;taskwarrior-web&lt;/a&gt;. This is intended for localhost usage and as a result has no authentication. To make it safe to open this from my own website, I have put it behind a nginx reverse proxy with basic HTTP authentication.&lt;/p&gt;
+
+
+    server {
+        listen 443 ssl;
+        ssl_certificate /etc/letsencrypt/live/mpcjanssen.nl/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/mpcjanssen.nl/privkey.pem;
+        server_name tasks.mpcjanssen.nl;
+        access_log /var/log/nginx/service.tasks.mpcjanssen.nl.access.log;
+        error_log /var/log/nginx/service.tasks.mpcjanssen.nl.error.log;
+        location / {
+            proxy_pass http://127.0.0.1:5678;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            auth_basic &#34;Restricted Content&#34;;
+            auth_basic_user_file /etc/nginx/.htpasswd;
+        }
+    }
+
+
+&lt;p&gt;I start the ruby gem itself using the following user systemd script at &lt;code&gt;~/.config/systemd/user/taskweb@.service&lt;/code&gt;:&lt;/p&gt;
+
+
+[Unit]
+Description=Taskwarrior web
+
+[Service]
+Type=simple
+SuccessExitStatus=0 1
+
+ExecStart=/home/mpcjanssen/.gem/ruby/2.4.0/bin/task-web -o 127.0.0.1 -d -F
+
+
+&lt;h3 id=&#34;android&#34;&gt;Android&lt;/h3&gt;
+
+&lt;p&gt;Android has two good clients already &lt;a href=&#34;https://play.google.com/store/apps/details?id=kvj.taskw&amp;amp;hl=en&#34;&gt;Taskwarrior for Android&lt;/a&gt; and &lt;a href=&#34;https://play.google.com/store/apps/details?id=com.taskwc2&amp;amp;hl=en&#34;&gt;TaskwarriorC2&lt;/a&gt;. However they are missing quite some functionallity I have implemented in my &lt;code&gt;todo.txt&lt;/code&gt; app Simpletask. So I am planning to support Taskwarrior in Simpletask.&lt;/p&gt;
+
+&lt;h2 id=&#34;capturing-tasks&#34;&gt;Capturing tasks&lt;/h2&gt;
+
+&lt;p&gt;For capturing tasks, I either use the CLI tools, or I use the org-protocl browser plugins with a custom org-protocl handler script in Tcl:&lt;/p&gt;
+
+
+puts &#34;Handling org-protocol call&#34;
+
+proc invalidcall {} {
+  puts stderr &#34;Invalid org-protocol call $::argv&#34;
+  exit 1
+}
+
+proc expandPercent {data} {
+    set pos 0
+    while { -1 != [set pos [string first &#34;%&#34; $data $pos]]} {
+        set hexNumber &#34;0x[string range $data $pos+1 $pos+2]&#34;
+        if { 4 != [string length $hexNumber] || ! [string is integer $hexNumber] } {
+            # No two hex character - eventual error treatment here
+            # at the moment just leave the percent character
+        } else {
+            set data [string range $data 0 $pos-1][format %c $hexNumber][string range $data $pos+3 end]
+        }
+        incr pos
+    }
+    return $data
+}
+
+proc handlecapture {type url title {text {}}} {
+  puts &#34;URL: $url&#34;
+  set url [expandPercent $url]
+  set title [string trim [expandPercent $title]]
+  set text [string trim [expandPercent $text]]
+
+  puts &#34;URL: $url&#34;
+  puts &#34;title: $title&#34;
+  puts &#34;text: $text&#34;
+  # console show
+  # vwait forever
+  captureAddTaskwarriorWindows $url $title $text
+  exit 0
+
+}
+
+proc captureAddTaskwarriorWindows {url title text} {
+    if {[catch {exec task add $title} result]} {
+	puts $result
+	gets stdin
+    } else {
+      set taskId [string range [lindex [split $result] end] 0 end-1]
+      exec task $taskId annotate Captured url: $url
+    }
+}
+
+proc captureAppendTodoTxt {url title text} {
+  set f [open &#34;~/Dropbox/todo/todo.txt&#34; a]
+  set timestamp [clock format [clock seconds] -format %Y-%m-%d]
+  puts $f &#34;$timestamp $title $url +orgcapture&#34;
+  close $f
+}
+
+if {$argc != 1} {
+  invalidcall
+}
+
+lassign $argv protocall
+
+if {!([string first org-protocol:// $protocall] == 0)} {
+  invalidcall
+}
+
+set prefixlength [string length org-protocol://]
+
+set protocall [string range $protocall $prefixlength end]
+
+puts $protocall
+
+set arguments [lassign [split $protocall /] action]
+
+switch -exact -- $action {
+  capture: { handlecapture {*}$arguments } 
+  default { 
+    puts stderr &#34;Unsupported action $action from $argv&#34;
+    exit 1
+  }
+}
+
+
+
+&lt;p&gt;To register the handler use:&lt;/p&gt;
+
+
+REGEDIT4
+
+[HKEY_CLASSES_ROOT\org-protocol]
+@=&#34;URL:Org Protocol&#34;
+&#34;URL Protocol&#34;=&#34;&#34;
+[HKEY_CLASSES_ROOT\org-protocol\shell]
+[HKEY_CLASSES_ROOT\org-protocol\shell\open]
+[HKEY_CLASSES_ROOT\org-protocol\shell\open\command]
+@=&#34;\&#34;C:\\Bin\\org-protocol-handler.exe\&#34; \&#34;%1\&#34;&#34;
+
+</description>
+    </item>
+    
+    <item>
+      <title>From Vim to Emacs and back again</title>
+      <link>/post/back-to-vim/</link>
+      <pubDate>Wed, 05 Mar 2014 00:00:00 +0000</pubDate>
+      
+      <guid>/post/back-to-vim/</guid>
+      <description>
+
+&lt;p&gt;This is the story of how I moved from Vim to Emacs and then back again.
+It&amp;rsquo;s a story of modes, plugins, stock configs, mobile devices and
+eBooks.&lt;/p&gt;
+
+&lt;h2 id=&#34;why-switch-to-emacs&#34;&gt;Why switch to Emacs?&lt;/h2&gt;
+
+&lt;p&gt;My initial interest for Emacs was triggered by a blog post about
+org-mode. Org mode looked like the plain text productivity solution I
+had been looking for for a long time. Apart from everything being plain
+text based, the functionality offered covered most of my bases. Not only
+is it a terrific outliner, it&amp;rsquo;s also a very good todo list, note taking
+app and publishing solution. For my blog I was using pelican and for my
+Android app I was generating separate versions of the documentation (one
+for on the web, one for in app). The switch to emacs with org mode
+allowed me to have one set of master files in org format, which where
+then &lt;code&gt;org-publish&lt;/code&gt;{.sourceCode}-ed to the different target formats.&lt;/p&gt;
+
+&lt;p&gt;This approach served me quite well. There were some lingering doubts
+though.&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Publishig to my blog was not as frictionless as it used to be
+with pelican.&lt;/li&gt;
+&lt;li&gt;I liked the reStructuredText format better, which is simple when
+possible and allows advanced use when needed.&lt;/li&gt;
+&lt;li&gt;I missed Vim&amp;rsquo;s modal editing. Emacs evil doesn&amp;rsquo;t seem to be a good
+replacement for me. It mixes two paradigms, which I find
+very confusing.&lt;/li&gt;
+&lt;li&gt;Vim works better on my Android tablet and phones. The port is more
+stable than the Emacs one. And Vim&amp;rsquo;s modal nature makes it easier to
+use with limited keyboards.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;what-were-my-problems-with-vim&#34;&gt;What were my problems with Vim?&lt;/h2&gt;
+
+&lt;p&gt;My problems with Vim were two fold.&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;No org-mode. I really love org-mode.&lt;/li&gt;
+&lt;li&gt;Too many plugins: In order to replicate Sublime Text and Emacs
+features, the number of plugins I used increased. This makes it
+difficult to drag my Vim config around to places which don&amp;rsquo;t have
+git (such as my phone or tablet).&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;how-i-switched-back&#34;&gt;How I switched back&lt;/h2&gt;
+
+&lt;p&gt;I decided to try to fix both shortcomings. Even though Vim doesn&amp;rsquo;t have
+org-mode I already have a great task manager in Simpletask. And notes
+can easily be kept in .rst files.&lt;/p&gt;
+
+&lt;p&gt;The second point was a bigger deal, but after re-reading &lt;em&gt;Practical Vim&lt;/em&gt;
+it finally clicked. I was trying to mold Vim into something it wasn&amp;rsquo;t (a
+SublimeText clone). Since then I have gone cold turkey on the plugins
+and I am quite happy with it, even though it does take some getting used
+to.&lt;/p&gt;
+
+&lt;p&gt;The fact that VimL is not a language I enjoy using is unchanged, but
+because I only use Vim now to edit text, that&amp;rsquo;s less of an issue.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Simpletask moved to Git and Redmine</title>
+      <link>/post/simpletask-uses-redmine/</link>
+      <pubDate>Mon, 06 Jan 2014 00:00:00 +0000</pubDate>
+      
+      <guid>/post/simpletask-uses-redmine/</guid>
+      <description>&lt;p&gt;Manually sending emails on ticket updates and keeping git mirrors of the
+code for FDroid building and on Github was starting to take too much of
+my time.&lt;/p&gt;
+
+&lt;p&gt;As a result I have decided to move the issues to Redmine and use git
+instead of fossil. Even though I love the one file approach of fossil,
+git just integrates better with tools like Redmine.&lt;/p&gt;
+
+&lt;p&gt;Visit the source and tracker
+&lt;a href=&#34;/tracker/projects/simpletask-android&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Simpletask 4.1.2 released</title>
+      <link>/post/simpletask-4.1.2-released/</link>
+      <pubDate>Thu, 02 Jan 2014 00:00:00 +0000</pubDate>
+      
+      <guid>/post/simpletask-4.1.2-released/</guid>
+      <description>&lt;p&gt;The latest version of Simpletask adds a new feature that was pending for
+quite some time. It&amp;rsquo;s now finally possible to archive only selected
+tasks. This way you can archive your tasks in stages. The new archive
+menu is available in the overflow menu when you have selected one or
+more tasks.&lt;/p&gt;
+
+&lt;p&gt;Additionally you can edit more than one task at a time by selecting
+multiple tasks and clicking the pen icon.&lt;/p&gt;
+
+&lt;p&gt;Finally for all fdroid users a Donate PayPal link was included, so if
+you really like Simpletask you can make a donation even without using
+Google play.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Site moved to Pelican</title>
+      <link>/post/moved-to-pelican/</link>
+      <pubDate>Thu, 19 Dec 2013 00:00:00 +0000</pubDate>
+      
+      <guid>/post/moved-to-pelican/</guid>
+      <description>&lt;p&gt;The site has been moved to Pelican for several reasons, but the most
+important one is that I can now keep my blog postings in the open and
+future proof reStructuredText format instead of having it all hidden in
+a database.&lt;/p&gt;
+
+&lt;p&gt;I initially moved to octopress, but after a single day of use, the lack
+of documentation was already annoying. In contrast, Pelican seems to
+have excellent documentation.&lt;/p&gt;
+
+&lt;p&gt;I have also decided to move towards reStructuredText (reST) because:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;In contrast to Markdown, it has a proper
+&lt;a href=&#34;http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html&#34;&gt;standard&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;It supports more flexible syntax highlighting in Pelican.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;As a result I have finally started to migrate &lt;a href=&#34;../build-your-own-os/&#34;&gt;one of my earliest
+ramblings&lt;/a&gt; to resStructuredText.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>VIM is here to stay</title>
+      <link>/post/vim-is-here-to-stay/</link>
+      <pubDate>Wed, 18 Dec 2013 00:00:00 +0000</pubDate>
+      
+      <guid>/post/vim-is-here-to-stay/</guid>
+      <description>
+
+&lt;p&gt;After doing a bit more reading on the subject, it turns out that not
+only Sublime Text (ST) is closed, it is also very expensive and might
+disappear any time. I am not willing to build my workflow around tools
+like that. A sentiment
+&lt;a href=&#34;http://lifehacker.com/yahoo-announced-today-that-much-loved-to-do-app-astrid-686450404&#34;&gt;Astrid&lt;/a&gt;
+user should appreciate.&lt;/p&gt;
+
+&lt;p&gt;However I do think Sublime text has some very nice features. Below I
+will discuss several ways to transfer these items to vim.&lt;/p&gt;
+
+&lt;h2 id=&#34;the-project-approach&#34;&gt;The Project approach&lt;/h2&gt;
+
+&lt;p&gt;A nice feature of ST is the project approach. It would be very nice to
+have VIM take into account you project structure and allow easy
+reference to the project root. Currently I have implemented this using
+the &lt;a href=&#34;https://github.com/MarcWeber/vim-addon-local-vimrc&#34;&gt;local vimrc&lt;/a&gt;
+plugin. This plugin will read a .vimrc in the current directory or any
+of the parent directories.&lt;/p&gt;
+
+&lt;p&gt;You can then put a .vimrc in the root of your project to add project
+specific customisations. For the Simpletask Android project I am
+currently using the following:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-vim&#34;&gt;&amp;quot; vimrc in project root
+&amp;quot; loaded by https://github.com/MarcWeber/vim-addon-local-vimrc
+
+set tags=tags;/
+let s:script_path = expand(&#39;&amp;lt;sfile&amp;gt;:p:h&#39;) . &amp;quot;/&amp;quot; 
+let g:ctrlp_custom_ignore = {
+  \ &#39;dir&#39;:  &#39;\vbuild$&#39;,
+  \ }
+
+nnoremap &amp;lt;leader&amp;gt;f :call FuzzyFindFromProjectRoot()&amp;lt;CR&amp;gt;
+
+function! FuzzyFindFromProjectRoot()
+    execute &amp;quot;CtrlP &amp;quot;.s:script_path
+endfunction
+
+function! ExecuteInProjectRoot(cmdline)
+     execute &amp;quot;:cd &amp;quot;.s:script_path
+     execute &amp;quot;:!start cmd /c &amp;quot;.a:cmdline
+endfunction
+
+function! AndroidMonitor()
+    let l:filename = s:script_path.&amp;quot;local.properties&amp;quot;
+    execute &amp;quot;vimgrep /\\v^sdk\\.dir=(.*)\s*$/j &amp;quot;.l:filename
+    for i in getqflist()
+        echo &amp;quot;found &amp;quot;. i.text
+        let l:cmd = split(i.text,&amp;quot;=&amp;quot;)[1]
+        execute &amp;quot;:!start cmd /c &amp;quot; . l:cmd . &amp;quot;\\tools\\monitor.bat&amp;quot;
+        break
+    endfor
+endfunction
+
+command! -nargs=1 ExecuteInProjectRoot :call ExecuteInProjectRoot(&amp;lt;f-args&amp;gt;)
+command! InstallFreeRelease :call ExecuteInProjectRoot(&amp;quot;gradlew installFreeRelease&amp;quot;)
+command! UpdateCTags :call ExecuteInProjectRoot(&amp;quot;ctags&amp;quot;)
+command! AndroidMonitor :call AndroidMonitor()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The real intelligence is in the line:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-vim&#34;&gt;let s:script_path = expand(&#39;:p:h&#39;) . &amp;quot;/&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This stores the path of the .vimrc file in the project root so it can be
+used from other parts of the script. A nice example of how this can be
+useful is by the &amp;lt;leader&amp;gt;f map which starts FuzzyFinder from the
+root of the project regardless of what the current directory in the
+project is.&lt;/p&gt;
+
+&lt;h2 id=&#34;navigating-with-tags&#34;&gt;Navigating with tags&lt;/h2&gt;
+
+&lt;p&gt;This covers part of the Ctrl-P functionality from ST, however another
+great feature is the ability to quickly navigate to a certain spot
+within a file using the @ syntax. FuzzyFinder supports the brilliant
+FufTag which uses the built-in VIM support for tags to navigate in
+files. This does need some additional setup to make it work nicely
+though.&lt;/p&gt;
+
+&lt;p&gt;In the Simpletask Android project I only want FuzzyFinder to display
+tags in the project. To achieve this I add the line:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-vim&#34;&gt;set tags=tags;/
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;to the project specific .vimrc. This means that VIM will look for the
+tags file with the name tags in this or any parent directory. To create
+this file I use &lt;a href=&#34;http://ctags.sourceforge.net/&#34;&gt;Exuberant CTags&lt;/a&gt; in
+combination with the :UpdateCTags command as defined in the project
+.vimrc.&lt;/p&gt;
+
+&lt;p&gt;Without some additional configuration of CTags this will not work,
+because:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Ctags by default doesn&amp;rsquo;t scan recursively&lt;/li&gt;
+&lt;li&gt;Ctags by default doesn&amp;rsquo;t pick up definitions in string or
+layout resources.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This can be remedied by adding a .ctags file in the root of the project
+with the following contents:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;--langdef=XML
+--langmap=XML:.xml
+--regex-XML=/id=&amp;quot;([a-zA-Z0-9_]+)&amp;quot;/\1/d,definition/
+--regex-XML=/name=&amp;quot;([a-zA-Z0-9_]+)&amp;quot;/\1/d,definition/
+--regex-XML=/id=&amp;quot;@\+id\/([a-zA-Z0-9_]+)&amp;quot;/\1/d,definition/
+--exclude=build
+--recurse=yes
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Besides recursively scanning, this also ignores the build directory,
+because I generally don&amp;rsquo;t need to switch to build artifacts and R.java
+clutters up the results.&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;tip&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;It makes sense to map the FufTag command to a leader map (I use
+&amp;lt;leader&amp;gt;t)&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;If you make any changes in the structure of the project, the ctags file
+can be updated, by calling the UpdateCTags command.&lt;/p&gt;
+
+&lt;h2 id=&#34;using-build-variants&#34;&gt;Using build variants&lt;/h2&gt;
+
+&lt;p&gt;Coming soon&lt;/p&gt;
+
+&lt;h2 id=&#34;setting-up-vimrc&#34;&gt;Setting up .vimrc&lt;/h2&gt;
+
+&lt;p&gt;Coming soon.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Saying goodbye to VIM?</title>
+      <link>/post/saying-goodbye-to-vim/</link>
+      <pubDate>Tue, 17 Dec 2013 00:00:00 +0000</pubDate>
+      
+      <guid>/post/saying-goodbye-to-vim/</guid>
+      <description>&lt;p&gt;I was reading the site &lt;a href=&#34;http://plaintext-productivity.net/&#34;&gt;http://plaintext-productivity.net/&lt;/a&gt; and saw some
+very good feedback on the &lt;a href=&#34;http://www.sublimetext.com/&#34;&gt;Sublime Text&lt;/a&gt;
+editor.&lt;/p&gt;
+
+&lt;p&gt;Curious to try it out. I downloaded it and tried the following steps:&lt;/p&gt;
+
+&lt;p&gt;Project-&amp;gt;Add Folder to Project-&amp;gt;My Documents&lt;/p&gt;
+
+&lt;p&gt;And then Ctrl-P just worked. If you consider the time it took me to make
+this work in VIM, I think I am sold.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>My GTD System</title>
+      <link>/post/my-gtd-system/</link>
+      <pubDate>Thu, 23 May 2013 12:09:45 +0200</pubDate>
+      
+      <guid>/post/my-gtd-system/</guid>
+      <description>
+
+&lt;h2 id=&#34;note-to-self&#34;&gt;Note to self&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;Focus on the process not on the tools!!&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;process&#34;&gt;Process&lt;/h2&gt;
+
+&lt;h3 id=&#34;ubiquitous-capture&#34;&gt;Ubiquitous capture&lt;/h3&gt;
+
+&lt;h2 id=&#34;open-formats&#34;&gt;Open formats&lt;/h2&gt;
+
+&lt;p&gt;I do not want my stuff ending up in some closed database or format which is not easily transferable to something else. This means that for instance Evernote is not the best match. Instead I use plain text files as much as possible.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Todo file: todo.txt plain text format&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Minutes and documents: Markdown syntax&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;For the actual next action list, the plain text open format requirement is less stringent. Tasks are generally easy to export and less longlived. In this case having a good application/tool to do task management is more important.&lt;/p&gt;
+
+&lt;h2 id=&#34;tools&#34;&gt;Tools&lt;/h2&gt;
+
+&lt;p&gt;Use tools that are intended for the purpose. For instance using Evernote as a task list is a poor fit and doesn&amp;rsquo;t work very well.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Storage: Dropbox or any other file/directory sync&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Task list (Android): Simpletask&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Task list (Windows): todotxt.net&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Improve performance of Android Emulator</title>
+      <link>/post/improve-performance-of-android-emulator/</link>
+      <pubDate>Mon, 29 Apr 2013 00:00:00 +0000</pubDate>
+      
+      <guid>/post/improve-performance-of-android-emulator/</guid>
+      <description>&lt;p&gt;When developing for Android, using the provided emulators can be an
+exercise in frustration. The emulator startup time is quite long and the
+applications run very slowly.&lt;/p&gt;
+
+&lt;p&gt;Fortunately there is now a way to run the emulator with decent
+performance on x86 hardware. The steps to configure this are explained
+at &lt;a href=&#34;https://www.virag.si/2012/10/speeding-up-android-emulator/&#34;&gt;https://www.virag.si/2012/10/speeding-up-android-emulator/&lt;/a&gt;. See
+section 2 to make your emulator rip.&lt;/p&gt;
+
+&lt;p&gt;Finally I can do testing on an emulator instead of on my personal phone.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Building fossil for Android</title>
+      <link>/post/building-fossil-for-android/</link>
+      <pubDate>Tue, 23 Apr 2013 00:00:00 +0000</pubDate>
+      
+      <guid>/post/building-fossil-for-android/</guid>
+      <description>&lt;p&gt;To build fossil for Android, the easiest way is to use the Android NDK. The changes needed to build fossil on a Linux machine can be found at &lt;a href=&#34;http://mpcjanssen.nl/fossil/fossil/timeline?r=build-android&#34;&gt;http://mpcjanssen.nl/fossil/fossil/timeline?r=build-android&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;After running the build.sh script, the Android fossil binary can be found in the obj subdirectory. This fossil binary works on Android and even allows you to host fossil repos from your Android device.&lt;/p&gt;
+
+&lt;p&gt;A prebuilt binary can be downloaded from &lt;a href=&#34;http://mpcjanssen.nl/files/android/fossil&#34;&gt;http://mpcjanssen.nl/files/android/fossil&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Simpletask source hosting move to fossil</title>
+      <link>/post/simpletask-source-hosting-moved-to-fossil/</link>
+      <pubDate>Fri, 12 Apr 2013 00:00:00 +0000</pubDate>
+      
+      <guid>/post/simpletask-source-hosting-moved-to-fossil/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;http://fossil-scm.org&#34;&gt;Fossil&lt;/a&gt; will now be used to do source code management for Simpletask. The repository is at &lt;a href=&#34;http://mpcjanssen.nl/fossil/simpletask&#34;&gt;http://mpcjanssen.nl/fossil/simpletask&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Building your own OS</title>
+      <link>/post/build-your-own-os/</link>
+      <pubDate>Tue, 28 Mar 2000 00:00:00 +0000</pubDate>
+      
+      <guid>/post/build-your-own-os/</guid>
+      <description>
+
+&lt;p&gt;If you want to make your own OS and you like all clear cut code which
+compiles and does everything you would have ever wanted well then look
+further (go see Linux). But if you want to build your own OS including
+booting, switching to PM etcetera etcetera, then this is the place to
+be!&lt;/p&gt;
+
+&lt;p&gt;Recently I started my own attempt at writing an OS, well you can&amp;rsquo;t
+exactly call it that right now, it only boots from a floppy and switches
+to Protected Mode right now, but that was hard enough to figure out.&lt;/p&gt;
+
+&lt;p&gt;Although there is a lot of info on the net concerning PM, boot sectors,
+BIOS and all, I have yet to find a place where all this stuff is treated
+step by step (and explained as well).&lt;/p&gt;
+
+&lt;p&gt;The following sections are an attempt to guide you through the pitfalls
+(especially switching to Protected Mode) of booting from a floppy drive,
+switching to protected mode and loading a kernel (a very simple one).&lt;/p&gt;
+
+&lt;p&gt;As my own project will progress I will try to take you along with me. So
+the order in which subjects are treated is probably not the most logical
+or most educational but it happens to be the order in which I stumbled
+(or better fell and broke a leg :-)) across things.&lt;/p&gt;
+
+&lt;p&gt;I hope this will help you in finding the right path (a well at least a
+path) through the slippery stuff called OS-programming and that you will
+have fun doing it. If you have any comments, suggestions or burning
+questions or if you want to point out some terrible mistakes I made,
+please feel free to contact me.&lt;/p&gt;
+
+&lt;h2 id=&#34;things-you-should-know-or-have-to-get-started&#34;&gt;Things you should know or have to get started&lt;/h2&gt;
+
+&lt;p&gt;It is assumed you have a Pentium computer at your disposal (though a
+lot of stuff will work on a 386 as well). Further I use The Netwide
+Assembler, &lt;a href=&#34;http://www.nasm.us/&#34;&gt;NASM&lt;/a&gt; for short, because it&amp;rsquo;s ease of
+use (much more logical than MASM or TASM in my humble opinion), because
+everybody else uses it and because it is FREE (well you&amp;rsquo;re from Holland
+or you&amp;rsquo;re not :-)). Last but not least you have to be a little insane
+;-) (Thanx to Raphael Gray for pointing out this very important
+prerequisite) Further more I assume you have the best debugger of all
+time, debug.exe (included in windows and dos) &amp;ldquo;installed&amp;rdquo; on your
+system. Well guess that&amp;rsquo;s all so let&amp;rsquo;s get dirty. And start with that
+magical process called booting.&lt;/p&gt;
+
+&lt;h2 id=&#34;booting-the-pc-and-the-boot-sector&#34;&gt;Booting the PC and the boot sector&lt;/h2&gt;
+
+&lt;p&gt;When you switch on your computer, program execution starts at memory
+location &lt;code&gt;F000:FFF0&lt;/code&gt;. (this is a real mode address, if you don&amp;rsquo;t get that
+right now, don&amp;rsquo;t worry I will get to that when I discuss Protected Mode,
+and it isn&amp;rsquo;t that important anyway.) This memory location is part of the
+ROM-BIOS (Basic Input/Output System) which is installed in all IBM
+compatibles. The computer then starts executing a routine called the
+POST (Power On Self Test) which checks if a keyboard is plugged in, if
+the CMOS OK and that kind of stuff. Not very interesting from an
+OS-programmer&amp;rsquo;s point of view. But the last action the POST takes is
+looking for a bootable disk. Hey this gets more interesting!&lt;/p&gt;
+
+&lt;p&gt;The BIOS checks your drives in the order which is defined in your
+BIOS-SETUP. (when we start testing some boot disks we&amp;rsquo;ll be booting from
+a floppy drive, so make sure your BIOS checks your flops first) But how
+does it know that a disk is bootable? Simple a bootable disk has the
+signature 0AA55h (h=hexadecimal) in the last two bytes (that is 55h in
+the second last and AAh in the last byte because of the Endian byte
+ordering in the x86 family). If this signature is found, sector 0 (the
+boot sector which is 200h=512 bytes big) is loaded in memory at location
+0000:7C00h and control is transferred to this address. Well that wasn&amp;rsquo;t
+so hard, was it ? So lets try to write or own boot sector which only
+displays:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sourceCode text&#34;&gt;NO BOOT DISK
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and then totally freezes. (to keep it simple) Here we go:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-nasm&#34;&gt;;------------------------------------------------------------------------------------------ 
+; dumbboot.asm                                  
+; demonstrates getting control after the compu has booted   
+; does nothing but display &amp;quot;NO BOOT DISK&amp;quot;  and freeze       
+;                                   
+; compile with NASM to binary file (nasm is assumed to be in your path)     
+;  nasm dumbboot.asm                    
+;                                           
+; written by emJay (c) 1998 last updated 29-08-98                   
+;                                           
+;------------------------------------------------------------------------------------------ 
+
+   org 07C00h                      ;this tells nasm that the first byte will be positioned  
+                                   ;at address 0000:07C00h so that all the jumps will
+                                   ;be correct
+
+   jmp short begin_bootroutine     ;jump to the start of our bootroutine skipping any data
+
+BootMessage: db &amp;quot;NO BOOT DISK&amp;quot;     ;reserve space for the bootmessage and initialize it
+MessageLength equ $-BootMessage    ;calculate the length of the boot message at compile time
+
+begin_bootroutine:                 ;this is where the bootroutine starts
+
+   mov ax, 0
+   mov es, ax                      ;point es to the segment of the boot message
+   mov cx, MessageLength
+
+   mov ax,01301h                   ;Function 13h (ax=13h) Attribute in bl (al = 01h)
+   mov bx,0007h                    ;screen page 0 (bh=0)  white on black (bl=07h)
+   mov dx,0                        ;start in left corner
+   mov bp, BootMessage             ;takes offset of BootMessage (no offset keyword, GREAT!)
+   int 10h                         ;display the string
+
+   spin: jmp short  spin           ;go into an infinite loop
+
+   times 510-($-$$) db 0           ;fill with zeroes until byte 510 of the boot sector
+                                   ;See NASM doc for more info on $ and $$)
+   dw 0xAA55                       ;write boot signature (actually goes in memory as 55h AAh)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Got that? Well lets compile it using &lt;a href=&#34;http://www.nasm.us/&#34;&gt;NASM&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;nasm dumbboot.asm&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;This gives a file called &amp;ldquo;dumbboot&amp;rdquo; which an exact binary picture so no
+headers. Now type (assuming you use A:)&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;debug dumbboot - w 100 0 0 1 - q&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;This writes your homemade bootsector to A:. (to use B: type w 100 1 0 1)
+Now reboot your PC and TADA we&amp;rsquo;ve grabbed control, isn&amp;rsquo;t that great?&lt;/p&gt;
+
+&lt;h2 id=&#34;the-dos-boot-sector&#34;&gt;The DOS boot sector&lt;/h2&gt;
+
+&lt;p&gt;The previous boot sector has one big problem. DOS won&amp;rsquo;t recognize the
+disk anymore. So if we would want to put a new bootsector at the disk,
+debug gives a write error, because it hasn&amp;rsquo;t got a clue wat type of disk
+it is.&lt;/p&gt;
+
+&lt;p&gt;Well, how does DOS know what kind of disk is inserted? Very simple, on
+the bootsector there are some reserved fields which tell DOS what kind
+of disk it is. And because our previous bootsector uses those fields to
+store code, DOS can&amp;rsquo;t handle the disk anymore. So let&amp;rsquo;s fix that! The
+fields in the bootsector are defined as follows:&lt;/p&gt;
+
+&lt;h3 id=&#34;dos-boot-sector-layout&#34;&gt;DOS boot sector layout&lt;/h3&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Offset     Field description                                                      Length of field&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;00h        Short (JMP xx , NOP) or long (JMP xxx) jump to begin of boot routine   3 bytes
+  03h        OEM identification                                                     8 bytes
+  0Bh        Bytes per sector                                                       1 word
+  0Dh        Sectors per cluster                                                    1 byte
+  0Eh        Number of reserved sectors                                             1 word
+  10h        Number of FATs                                                         1 byte
+  11h        Number of entries in root directory                                    1 word
+  13h        Number of sectors in volume                                            1 word
+  15h        Media descriptor                                                       1 byte
+  16h        Number of sectors per FAT                                              1 word
+  18h        Sectors per track                                                      1 word
+  1Ah        Number of read/write heads                                             1 word
+  1Ch        Number of hidden sectors                                               1 word
+  1Eh-1FDh   Boot routine                                                           480 bytes
+  1FEh       55h                                                                    1 byte
+  1FFh       AAh                                                                    1 byte&lt;/p&gt;
+
+&lt;p&gt;OK that seems pretty straightforward, so let&amp;rsquo;s try to put it to
+practice. In the following piece of code I am assuming you use a 3,5&amp;rdquo; HD
+disk.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sourceCode nasm&#34;&gt;;------------------------------------------------------------------------------------------
+; dosboot.asm
+; demonstrates getting control after the compu has booted
+; does nothing but display &amp;quot;NO BOOT DISK&amp;quot;  and freeze
+; while DOS is still able to read/write the disk
+;
+; compile with NASM to binary file (nasm is assumed to be in your path)
+;  nasm dosboot.asm
+;
+; written by emJay (c) 1998 last updated 31-08-98
+;
+;------------------------------------------------------------------------------------------         
+   org 07C00h                      ;this tells nasm that the first byte will be positioned
+                                   ;at address 0000:07C00h so that all the jumps will
+                                   ;be correct
+
+   jmp short begin_bootroutine     ;jump to the start of our bootroutine skipping any data
+   nop                             ;first field must be 3 bytes long jmp short is 2 bytes
+   db &#39;MajOS1.0&#39;                   ;OEM identification
+   dw 512                          ;Bytes per sector
+   db 1                            ;Sectors per cluster
+   dw 1                            ;Number of reserved sectors
+   db 2                            ;Number of FATs
+   dw 0E0h                         ;Number of dirs in root
+   dw 0B40h                        ;Number of sectors in volume
+   db 0F0h                         ;Media descriptor
+   dw 9                            ;Number of sectors per FAT
+   dw 18                           ;Number of sectors per track
+   dw 2                            ;Number of read/write heads
+   dw 0                            ;Number of hidden sectors
+
+begin_bootroutine:                 ;this is where the bootroutine starts
+
+   mov ax, 0
+   mov es, ax                      ;point es to the segment of the boot message
+   mov cx, MessageLength
+
+   mov ax,01301h                   ;Function 13h (ax=13h) Attribute in bl (al = 01h)
+   mov bx,0007h                    ;screen page 0 (bh=0)  white on black (bl=07h)
+   mov dx,0                        ;start in left corner
+   mov bp, BootMessage             ;takes offset of BootMessage (no offset keyword, GREAT!)
+   int 10h                         ;display the string
+
+   spin: jmp short  spin           ;go into an infinite loop
+
+   times 510-($-$$) db 0           ;fill with zeroes until byte 510 of the boot sector
+                                   ;See NASM doc for more info on $ and $$)
+   dw 0xAA55                       ;write boot signature (actually goes in memory as 55h AAh)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;OK now reformat your boot disk (format a: /u) compile dosboot.asm and
+write it to the bootsector of your bootdisk, just as you did before.&lt;/p&gt;
+
+&lt;p&gt;This disk can now again be used as a normal DOS disk, you can view it
+and put files on it, but when you boot from it, it still displays NO
+BOOT DISK, try it!&lt;/p&gt;
+
+&lt;p&gt;I hope these two sections gave you some feel of the boot process and the
+boot sector. If you want more information check out Michael Tischer&amp;rsquo;s
+book. OK please go to the toilet, take a snack, drink some coffee and
+then read on because we&amp;rsquo;re going to look at Protected Mode!&lt;/p&gt;
+
+&lt;h2 id=&#34;protected-mode-what-is-it-all-about&#34;&gt;Protected Mode, what is it all about?&lt;/h2&gt;
+
+&lt;p&gt;Although through the years most PC&amp;rsquo;s have been equiped with more and
+more memory, all DOS programs still had to deal with the infamous 640 KB
+limit. Why wasn&amp;rsquo;t it possible to access all those MB&amp;rsquo;s you had installed
+on your system? Because even the newest processor had to be able to
+execute the 8086&amp;rsquo;s code it had to operate in the same way. This means
+you only had 20-bit addresses giving a total accessible memory of
+$2^20 = 1MB$, even if you had 40 MB plugged in your system. On a pentium
+however we have a 32-bits wide address bus which gives a theoretical
+address space of $2^32 = 4GB$!&lt;/p&gt;
+
+&lt;p&gt;How can we access al this additional memory. Well we have to leave the
+8086&amp;rsquo;s real mode and switch to the incredible Protected Mode. Do you
+want a codesegment of 4 GB? Do you want to put the entire Encyclopedia
+Brittanica in your datasegment? Well just do it, switch to Protected
+Mode (PM) and you&amp;rsquo;ve got access to all the memory you would ever want.&lt;/p&gt;
+
+&lt;h2 id=&#34;how-the-pc-behaves-in-real-mode&#34;&gt;How the PC behaves in real mode&lt;/h2&gt;
+
+&lt;p&gt;When you reboot the PC it enters a mode known as real mode. This mode
+gives maximum compatibility with the 8086 and some extra features (such
+as extended registers, faster instructions ,additional instructions etc.
+etc.).&lt;/p&gt;
+
+&lt;p&gt;In this mode memory is divided in segments of 64 KB (16 bits) with a
+total addressable space of $2^20=1024KB$. Memory locations are accessed
+through a segment:offset address (the so called &lt;em&gt;logical address&lt;/em&gt;).
+Calculation of the &lt;em&gt;physical address&lt;/em&gt; (the actual byte number in memory)
+is performed in the following way:&lt;/p&gt;
+
+&lt;p&gt;$$physical address = 10h*segment+offset$$&lt;/p&gt;
+
+&lt;p&gt;For example if we take segment 9000h and offset 8000h (logical address
+9000:8000h) we get physical address
+$9000h*10h+8000h = 90000h + 8000h = 98000h$. (Note that this address
+refers to the same physical memory location as for instance 9300:5000h
+so segments overlap in real mode) To access different segments, 16-bit
+segment registers (such as cs, ds and es) are used so that the maximum
+address is $FFFF:000Fh = FFFFFh physical = 2^20$.&lt;/p&gt;
+
+&lt;p&gt;The maximal address accessable address would be FFFF:FFFFh = 10FFEFh
+physical, but this can&amp;rsquo;t be expressed in 20 bits. However if we find a
+way to access an additional address line (the most famous A20 line) we
+can even use this additional FFFF:FFFFh-FFFF:000Fh=FFF0h=65520 bytes.
+(the so called High Memory Area (HMA)) But why do we have to enable this
+A20 line? Why isn&amp;rsquo;t it enabled at boot up?&lt;/p&gt;
+
+&lt;p&gt;If the A20 line would be enabled then if we got the highest 20 bit
+address FFFF:000Fh = FFFFFh and we would go one byte further
+(FFFF:0010h) we would access the physical address 100000h (1 0000 0000
+0000 0000 0000b), however at the 8086 there is no A20 (this is the 21st
+addressline because we start at A0) so that FFFF:000Fh+1= 0000:0000h
+dropping the carry. Because some programs use this memory wrap feature
+on the 8086, the A20 has to be disabled for complete backward
+compatibility.&lt;/p&gt;
+
+&lt;p&gt;There is however a way to enable this A20 address line (this is what
+himem.sys does on MS-DOS computers giving an additional memoryblock of
+almost 64K for device drivers and so on). We can use the keyboard
+controller to enable this A20 line, because the A20 line is logical
+ANDed with a keyboard controller output, which is disabled at boot up.
+This means that the 21st bit of an address is always: 0 AND x = 0. So
+all we have to do is enable this keyboard controller output to get: 1
+AND x = x. (code to do this will be presented in a later chapter)
+&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;Now how can we access A31-A22 to get the 4 GB addressable memory space?
+You guessed it, by switching to protected mode. However in PM, memory
+management is quite a different ballplay so let&amp;rsquo;s check it out.&lt;/p&gt;
+
+&lt;h2 id=&#34;how-the-pc-behaves-in-protected-mode&#34;&gt;How the PC behaves in Protected Mode&lt;/h2&gt;
+
+&lt;h3 id=&#34;segmentation-in-protected-mode&#34;&gt;Segmentation in Protected Mode&lt;/h3&gt;
+
+&lt;p&gt;In PM segmentation is performed in quite a different manner. Here a
+segmentregister (CS, DS, ES FS, GS or SS) contains a &lt;em&gt;segment selector&lt;/em&gt;
+which is a pointer to a &lt;em&gt;segment descriptor&lt;/em&gt; in the &lt;em&gt;Global or Local
+Descriptor Table (GDT or LDT)&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;The segment descriptor (64 bits) contains information about the segment,
+like access rights, size, and base address. Let&amp;rsquo;s take a look at a
+segment descriptors fields&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/img/SegmentDescriptor.png&#34; alt=&#34;Segment Descriptor&#34; /&gt;{width=&amp;ldquo;100%&amp;rdquo;}&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;A       Available for use by programmer
+  Base    Segment Base Address
+  DB      Default operation size (0 = 16-bit segment; 1 = 32-bit segment)
+  DPL     Descriptor privilege level
+  G       Granularity
+  Limit   Segment limit
+  P       Segment present
+  S       Descriptor type (0 = system; 1 = code or data)
+  Type    Segment type&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;Let&amp;rsquo;s take a look at all those fields in a bit more detail.&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;A: this bit is available for your own use, for instance to create
+your own virtual memory manager.&lt;/li&gt;
+&lt;li&gt;Base: this is the base address of the segment. Because it&amp;rsquo;s 32 bits
+long, a segment can start on any physical memory place (not just at
+64K borders as in real mode) if this field contains for instance
+5555:0000h, then this segment will start at physical
+address 55550000h. (so no multiplication with 10h as in real mode)
+However with speed in mind it is wise to let a segment start on a
+16-byte boundary.&lt;/li&gt;
+&lt;li&gt;DB: This field performs different functions depending on the
+segment Type. This flag is always 1 for 32-bit code and data
+segments and 0 for 16-bit code and data segments.&lt;/li&gt;
+&lt;li&gt;DPL: These two bits give the privilege level of the segment ranging
+from 0 (highest privilege) to 3 (lowest privilege). This flag is
+used to control access to a segment.&lt;/li&gt;
+&lt;li&gt;Limit: Gives the size of the segment. Although it&amp;rsquo;s only 20 bits
+long, a segment can be 4 GB long this is achieved by setting the
+G bit.&lt;/li&gt;
+&lt;li&gt;G: If this bit is set the actual segment size is the limit times 4
+KB ($1MB * 4K = 4 GB$), if this flag is clear the size of the
+segment is the limit in bytes. So for segments bigger than 1 MB the
+size must be a mutiple of 4 KB, but this is no real restriction.&lt;/li&gt;
+&lt;li&gt;P: This flag indicates whether the segment is present in memory
+(set) or not present (clear). If this flag is clear the processor
+generates an segment not present exception (#NP) when a segment
+selector that points to the segment descriptor is loaded in a
+segment register. When we are not using virtual memory or paging
+this flag is usually set.&lt;/li&gt;
+&lt;li&gt;S: Specifies a system segment (clear) or a code or data
+segment (set).&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Type: Indicates the segment type (note that bits 10-8 have different
+names depending on bit 11 (code or data)) :&lt;/p&gt;
+
+&lt;p&gt;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| Hexadecima | 11  | 10   | 9    | 8    | Descriptor    | Description                     |
+| l          |     |      |      |      | Type          |                                 |
++============+=====+======+======+======+===============+=================================+
+|            |     | &lt;em&gt;E&lt;/em&gt;  | &lt;em&gt;W&lt;/em&gt;  | &lt;em&gt;A&lt;/em&gt;  |               |                                 |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; 0        | 0   | 0    | 0    | 0    | Data          | Read-Only                       |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; 1        | 0   | 0    | 0    | 1    | Data          | Read-Only Accessed              |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; 2        | 0   | 0    | 1    | 0    | Data          | Read-Write                      |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; 3        | 0   | 0    | 1    | 1    | Data          | Read-Write Accessed             |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; 4        | 0   | 1    | 0    | 0    | Data          | Read-Only, Expand down          |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; 5        | 0   | 1    | 0    | 1    | Data          | Read-Only, Expand down,         |
+|            |     |      |      |      |               | Accessed                        |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; 6        | 0   | 1    | 1    | 0    | Data          | Read-Write, Expand down         |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; 7        | 0   | 1    | 1    | 1    | Data          | Read-Write, Expand down,        |
+|            |     |      |      |      |               | Accessed                        |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+|            |     | &lt;em&gt;C&lt;/em&gt;  | &lt;em&gt;R&lt;/em&gt;  | &lt;em&gt;A&lt;/em&gt;  |               |                                 |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; 8        | 1   | 0    | 0    | 0    | Code          | Execute-Only                    |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; 9        | 1   | 0    | 0    | 1    | Code          | Execute-Only, accessed          |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; A        | 1   | 0    | 1    | 0    | Code          | Execute/Read                    |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; B        | 1   | 0    | 1    | 1    | Code          | Execute/Read,accessed           |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; C        | 1   | 1    | 0    | 0    | Code          | Execute-Only, conforming        |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; D        | 1   | 1    | 0    | 1    | Code          | Execute-Only, conforming,       |
+|            |     |      |      |      |               | accessed                        |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; E        | 1   | 1    | 1    | 0    | Code          | Execute/Read-Only, conforming   |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+
+| &amp;gt; F        | 1   | 1    | 1    | 1    | Code          | Execute/Read-Only, conforming,  |
+|            |     |      |      |      |               | accessed                        |
++&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;+&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Because we would like to access a number of segments, we will need a lot
+of segment descriptors (especially in a multi-tasking Operating System).
+Therefore we make a table of segment descriptors know as the Global
+Discriptor Table.&lt;/p&gt;
+
+&lt;h3 id=&#34;the-global-descriptor-table&#34;&gt;The Global Descriptor Table&lt;/h3&gt;
+
+&lt;p&gt;The global descriptor table (GDT) is a part of the memory where segment
+descriptors are defined. The first descriptor is located at the memory
+location which is loaded in the &amp;lt;b&amp;gt;Global Descriptor Table
+Register (GDTR)&amp;lt;/b&amp;gt;, this is a 48-bit register containing the
+address of the GDT (32 bits) and the length of the GDT in bytes (16
+bits) so there can be 2&amp;lt;sup&amp;gt;16&amp;lt;/sup&amp;gt; / 8 = 8192 descriptors
+in the GDT. The first descriptor in the GDT must be the so called
+&amp;lt;b&amp;gt;null descriptor&amp;lt;/b&amp;gt;. This descriptor consists only of
+zeroes. And although this isn&amp;rsquo;t used by the system, it can be loaded to
+any data-segment register (DS, ES, FS and GS) without generating an
+exception. Let&amp;rsquo;s look at an example of a GDT:&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s look at the &lt;em&gt;Basic Flat Model&lt;/em&gt;. This means that we have two
+segments of 4 GB, a code and a data segment, which completely overlap in
+memory. (So it is still possible, though not advisable, to write self
+modifying code):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sourceCode nasm&#34;&gt;gdtr                               ;this will be loaded in the GDTR
+   dw gdt_end-gdt-1                ;length of gdt
+   dd gdt                          ;linear, physical address of gdt 
+
+gdt
+gdt0                               ;null descriptor 64 bits is 2
+doublewords
+   dd 0         
+   dd 0
+code_gdt                           ;code descriptor 4 GB flat segment
+starting 0000:0000h 
+   dw 0ffffh                       ;Limit bits 15:00
+   dw 0h                           ;Base bits 15:00
+   db 0h                           ;Base bits 23:16 
+   db 09ah                         ;Code execute read (0Ah)  
+                                   ;Present, DPL 0 , non system segment (09h)
+   db 0cfh                         ;Segment limit 19:16 (0Fh) 
+                                   ;4 KB granularity, 32-bit , avl = 0 (0Ch)
+   db 0h                           ;Segment Base 31:24
+
+data_gdt                           ;data descriptor 4 GB flat segment
+starting 0000:0000h
+   dw 0ffffh                       ;Limit bits 15:00
+   dw 0h                           ;Base bits 15:00
+   db 0h                           ;Base bits 23:16 
+   db 092h                         ;Data read/write (02h)
+                                   ;Present, DPL 0, non system segment (09h)    
+   db 0cfh                         ;Segment limit 19:16 (0Fh)
+                                   ;4 KB granularity, 32 bit ,avl = 0 (0Ch)
+   db 0h                           ;Segment Base 31:24
+
+videosel                           ;simple way to write to video memory 
+   dw 3999                         ;Limit 80*25*2-1 (80*25 chars + attributes) 
+   dw 0x8000    
+   db 0x0B                         ;Base 0xB8000  
+                                   ;(in real mode segment 0B800h = 10h*0B800h = 0B8000h) 
+   db 0x92                         ;Data read/write (02h)
+                                   ;Present, DPL 0, non system segment (09h) 
+   db 0                            ;Segment limit 19:16 (0h)
+                                   ;byte-granular, 16-bit
+   db 0                            ;Segment Base 31:24
+gdt_end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now we have seen how to set up code and data segments it would be nice
+to see how we can access these segments, this is done by loading segment
+selectors in segment register. &amp;lt;a name=&amp;ldquo;select&amp;rdquo;&amp;gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;segment-selectors&#34;&gt;Segment Selectors&lt;/h3&gt;
+
+&lt;p&gt;A segment selector is a 16-bit value used to select a segment in the
+GDT. First let&amp;rsquo;s take a look at the segment selector&amp;rsquo;s format:&lt;/p&gt;
+
+&lt;p&gt;&amp;lt;/p&amp;gt;&amp;lt;center&amp;gt; &amp;lt;table border=&amp;ldquo;1&amp;rdquo;&amp;gt;
+&amp;lt;tbody&amp;gt;&amp;lt;tr&amp;gt; &amp;lt;td align=&amp;ldquo;CENTER&amp;rdquo; colspan=&amp;ldquo;2&amp;rdquo;&amp;gt;
+&amp;lt;b&amp;gt;Segment selector overview&amp;lt;/b&amp;gt; &amp;lt;/td&amp;gt; &amp;lt;/tr&amp;gt;
+&amp;lt;tr&amp;gt; &amp;lt;td align=&amp;ldquo;CENTER&amp;rdquo; colspan=&amp;ldquo;2&amp;rdquo;&amp;gt; &amp;lt;pre&amp;gt; 16 3 2 1 0
+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;- | Index | T | RPL |
+&amp;lt;/p&amp;gt;&amp;lt;ul&amp;gt; &amp;lt;li&amp;gt;Index: this is the index of the segment
+to be used in the GDT or LDT. In our previous example of a GDT, the null
+selector would have an index of 0h, the code segment selector an index
+of 1h and so on. I guess this is the actual reason why there can only be
+8192 selectora. (the index field is 13 bits wide and
+2&amp;lt;sup&amp;gt;13&amp;lt;/sup&amp;gt; = 8192 = 2000h) &amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;TI: this
+tells the processor whether the descriptor should be taken out of de GDT
+or the LDT (Local Descriptor Table, this table can be defined for every
+seperate process in a multitasking environment). In our case TI = 0 so
+that we&amp;rsquo;ll use the GDT. &amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;RPL: The requested
+privilege level must be smaller or equal to the descriptor privilege
+level (so higher or same priority) to be able to access the segment. If
+this is not the case a general protection exception will be generated
+(#GP). In our case we&amp;rsquo;ll use RPL = 0. &amp;lt;/li&amp;gt;&amp;lt;/ul&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;Assume we would want to access the datasegment from the GDT, with RPL =
+0. We would then have to load for example DS with 10h (0000 0000 0000
+1000b). If we now want to place a white on black &amp;lsquo;a&amp;rsquo; (character code
+041h color attribute 07h) in the first place of the video memory we
+could say:&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;mov word [0xB8000],0x0741&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;We could also load for instance gs with 18h (selecting the videosegment)
+and say:&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;mov word [gs:0],0x741 ;remember segment-base = 0xB8000 so offset =
+0h&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;Now the only thing left mentioning is how to set up the GDTR. Well
+luckely there is a special instruction which does this for us:
+&amp;lt;b&amp;gt;lgdt (Load Global descriptor table)&amp;lt;/b&amp;gt;. The limit loaded
+in the GDTR is an offset to the last valid byte, so a limit of 0 results
+in exactly one valid byte. So if we would want to load the GDTR in our
+case the limit would be gdt_end-gdt-1, because the label gdt_end is
+one byte after the last byte of the GDT, which is exactly what I&amp;rsquo;ve put
+at label gdtr. The base address of our GDT will be 0000:16-bit offset of
+gdt, or simpler just gdt. Again I have put that there. So all we have to
+do is load the GDTR with the value specified at gdt:&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;o32 lgdt [gdtr]&amp;lt;/p&amp;gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;o32 is a NASM keyword which tells the assembler that our operator size
+prefix is 32-bit, I don&amp;rsquo;t know whether this is absolutely necessary.
+(any suggestions?) &amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;This is all we need to know about memory access in PM for the moment.
+Now the time has come to do the actual switch.&lt;/p&gt;
+
+&lt;p&gt;&amp;lt;/p&amp;gt;&amp;lt;center&amp;gt;&amp;lt;h2&amp;gt;8. Switching from real to Protected
+Mode&amp;lt;/h2&amp;gt;&amp;lt;/center&amp;gt;&amp;lt;b&amp;gt;The operation mode of the
+processor is controlled by the least significant bit of the 32-bit
+control register 0 (CR0), also called the protection enable (PE)
+bit.&amp;lt;/b&amp;gt; Because it&amp;rsquo;s paramount to leave the other bits unchanged
+this is done in the following way:&lt;/p&gt;
+
+&lt;p&gt;&amp;lt;/p&amp;gt;&amp;lt;pre&amp;gt;mov eax,cr0 ;load eax with the contents of cr0 or
+eax,1 ;set the least significant bit leave the other bits unchanged mov
+cr0,eax ;switch to PM &amp;lt;/pre&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;Before switching to PM, there are a few things you need to do:
+&amp;lt;/p&amp;gt;&amp;lt;ol&amp;gt; &amp;lt;li&amp;gt;cli: Disable interrupts, because the
+installed interrupts are all written for real mode and if an interrupt
+would occur after the mode switch, your system would probably reboot.
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;Load the GDTR using lgdt, to set up the GDT.
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;Execute a mov CR0 instruction to set the PE bit of
+control register 0. &amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;Immediately after the mov,cr0
+instruction perform a far jump to clear the instruction prefetch queue,
+because it&amp;rsquo;s still filled with real mode instructions and addresses.
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;Reload all the segment registers except CS. (which
+is reloaded by the far jump) &amp;lt;/li&amp;gt;&amp;lt;li&amp;gt; Load the Interrupt
+descriptor tables to make interrupts possible &amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;sti:
+Re-enable interrupts. &amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;Enable the A20 line to
+prevent memorywrap. &amp;lt;/li&amp;gt;&amp;lt;/ol&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;In the following source, I am only going to load the GDT and switch to
+PM. So I will not set up a stack or an IDT, which is fine as long as you
+don&amp;rsquo;t POP or PUSH and leave interrupts disabled. When you boot this
+example the following actions will be taken:&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;&amp;lt;/p&amp;gt;&amp;lt;ol&amp;gt; &amp;lt;li&amp;gt;The screen will be erased.
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;A brown &amp;lsquo;a&amp;rsquo; will be printed in the left corner of
+the screen. &amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;The system will wait for a keypress.
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;The switch to PM will be made.
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;A white &amp;lsquo;a&amp;rsquo; will be printed in the left corner of
+the screen. &amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;The system will go into an infinite
+loop (note that CTRL+ALT+DEL will no longer function, because interrupts
+are still disabled). &amp;lt;/li&amp;gt;&amp;lt;/ol&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;&amp;lt;a
+href=&amp;rdquo;&lt;a href=&#34;http://web.archive.org/web/20010424064833/http://www.phys.uu.nl/~mjanssen/osdev/pmboot.asm&#34;&gt;http://web.archive.org/web/20010424064833/http://www.phys.uu.nl/~mjanssen/osdev/pmboot.asm&lt;/a&gt;&amp;ldquo;&amp;gt;Download
+pmboot.asm&amp;lt;/a&amp;gt;&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;&amp;lt;/p&amp;gt;&amp;lt;center&amp;gt;&amp;lt;h2&amp;gt;9. Enable the A20 address
+line&amp;lt;/h2&amp;gt;&amp;lt;/center&amp;gt;In order to use the full amount of RAM
+plugged in your computer you have to enable the a20 addressline. As
+mentioned earlier this can be done by enabling a line of the floppy
+controller. The state of this line can be changed by setting the
+appropriate bit. This bit is the second bit of the AT keyboard
+controller output port. (port 064h) So in theory we can enable the a20
+address line by simply setting this second bit.&lt;/p&gt;
+
+&lt;p&gt;There are however some things to be taken into account. The keyboard
+buffer (that is the buffer on the keyboard, not the BIOS-buffer) can
+still contain some bytes which have to be handled first. &amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;If we have completly cleared the keyboard buffer we try to set the a20
+line. This should then enable us to use the additional 64K HMA. So we
+can test whether the a20 gate is enabled by writing a byte to
+FFFF:000Fh+1 and check whether this byte is different from the one at
+0000:0001h. Because if a20 is enabled FFFF:000Fh+1=100000h physical and
+if a20 is not enabled a wrap will occur thus writing a byte to 000000h
+physical. &amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;To be able to see if the byte positioned at the physical address 00000h
+has really changed we try to write the bit inverted (by using NOT) byte
+of the original value of 00000h. In that manner it&amp;rsquo;s always possible to
+see if 00000h has changed (which would imply that a20 is not enabled).
+&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;The code I have used below is not written by me. (although I have added
+some comments) I think Tran originally wrote this code for use in his
+PMode protected mode wrapper. The piece of code conains a function
+EnableA20 which should do exactly that. So here we go: &amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sourceCode nasm&#34;&gt;enablea20kbwait:                      ;wait for safe to write to 8042
+   xor cx,cx                          ;loop a maximum of FFFFh times
+enablea20kbwaitl0:
+   jmp short $+2                      ;these three jumps are inserted to
+wait some clockcycles
+   jmp short $+2                      ;for the port to settle down
+   jmp short $+2
+   in al,64h                          ;read 8042 status
+   test al,2                          ;buffer full? zero-flag is set if
+bit 2 of 64h is not set
+   loopnz enablea20kbwaitl0           ;if yes (bit 2 of 64h is set), loop
+until cx=0
+  ret
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;;while the above loop is executing keyboard interrupts will occur
+which will empty the buffer ;so be sure to have interrupts still
+enabled when you execute this code&lt;/p&gt;
+
+&lt;dl&gt;
+&lt;dt&gt;enablea20test: ;test for enabled A20&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;mov al,byte [fs:0] ;get byte from 0:0 mov ah,al ;preserve old
+byte not al ;modify byte xchg al,byte [gs:10h] ;put modified
+byte to 0ffffh:10h ;which is either 0h or 100000h&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;depending on the a20 state&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;cmp ah,byte [fs:0] ;set zero if byte at 0:0 equals&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;preserved value&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;;which means a20 is enabled&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;mov [gs:10h],al ;put back old byte at 0ffffh:10h&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;ret ;return, zeroflag is set if A20&lt;/p&gt;&lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;p&gt;enabled&lt;/p&gt;
+
+&lt;p&gt;EnableA20: ;hardware enable gate A20 (entry point of routine&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;xor ax,ax ;set A20 test segments 0 and 0ffffh mov fs,ax ;fs=0000h
+dec ax mov gs,ax ;gs=0ffffh&lt;/p&gt;
+
+&lt;p&gt;call enablea20test ;is A20 already enabled? jz short enablea20done
+;if yes (zf is set), done&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;;if the system is PS/2 then bit 2 of port 92h (Programmable Option
+Select) ;controls the state of the a20 gate&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;in al,92h ;PS/2 A20 enable or al,2 ;set bit 2 without changing the
+rest&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;dl&gt;
+&lt;dt&gt;of al&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;jmp short \$+2 ;Allow port to settle down jmp short \$+2 jmp short
+\$+2 out 92h,al ;enable bit 2 of the POS call enablea20test ;is
+A20 enabled? jz short enablea20done ;if yes, done&lt;/p&gt;
+
+&lt;p&gt;call enablea20kbwait ;AT A20 enable using the 8042&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;keyboard controller&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;;wait for buffer empty (giving zf&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;set)&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;jnz short enablea20f0 ;if failed to clear buffer jump&lt;/p&gt;
+
+&lt;p&gt;mov al,0d1h ;keyboard controller command 01dh&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;(next byte written to&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;out 64h,al ;60h will go to the 8042 output port&lt;/p&gt;
+
+&lt;p&gt;call enablea20kbwait ;clear buffer and let line settle&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;down&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;jnz short enablea20f0 ;if failed to clear buffer jump&lt;/p&gt;
+
+&lt;p&gt;mov al,0dfh ;write 11011111b to the 8042 output&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;port&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;;(bit 2 is anded with A20 so we&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;should set that one)&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;out 60h,al&lt;/p&gt;
+
+&lt;p&gt;call enablea20kbwait ;clear buffer and let line settle&lt;/p&gt;&lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;p&gt;down&lt;/p&gt;
+
+&lt;dl&gt;
+&lt;dt&gt;enablea20f0: ;wait for A20 to enable&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;mov cx,800h ;do 800h tries&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;enablea20l0:&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;call enablea20test ;is A20 enabled? jz enablea20done ;if yes, done&lt;/p&gt;
+
+&lt;p&gt;in al,40h ;get current tick counter (high&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;byte)&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;jmp short \$+2 jmp short \$+2 jmp short \$+2 in al,40h ;get
+current tick counter (low byte) mov ah,al ;save low byte of clock
+in ah&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;enablea20l1: ;wait a single tick&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;in al,40h ;get current tick counter (high&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;byte)&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;jmp short \$+2 jmp short \$+2 jmp short \$+2 in al,40h ;get
+current tick counter (low byte) cmp al,ah ;compare clocktick to
+one saved in&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;ah&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;je enablea20l1 ;if equal wait a bit longer&lt;/p&gt;
+
+&lt;p&gt;loop enablea20l0 ;wait a bit longer to give a20 a&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;chance to get enabled&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;stc ;a20 hasn&amp;rsquo;t been enabled so set&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;carry to indicate failure&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;ret ;return to caller&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;enablea20done:&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;clc ;a20 has been enabled succesfully so&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;clear carry&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;ret ;return to caller&lt;/p&gt;&lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;p&gt;As you can see it requires quite a few lines of assembly to enable the
+a20 gate. This can pose a problem because a bootsector can only be a
+maximum 512 bytes. (And we still have to add code to load our kernel en
+place it in memory) &amp;lt;/p&amp;gt; In order to make some room we will remove
+the layout area DOS uses to identify the disk. This forces us to write a
+program by which we can write a file to the bootsector of our bootdisk.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&amp;lt;/p&amp;gt;&amp;lt;center&amp;gt;&amp;lt;h2&amp;gt;10. Writing a bootsector to a non-DOS
+disk&amp;lt;/h2&amp;gt;&amp;lt;/center&amp;gt;In contrast to all those lucky linux-users
+who have dd at their disposal, a DOS or Windows user doesn&amp;rsquo;t have an
+easy way of writing a binary image to a floppy if it is not recognizable
+by DOS. Because our bootsector is getting a bit full I really wanted to
+remove the block with diskinfo DOS uses to recognize the disk. The
+problem is that it&amp;rsquo;s then impossible to use debug to write the
+bootsector to the floppy. So I decided to write my very own WBS (Write
+BootSector).&lt;/p&gt;
+
+&lt;p&gt;So what has to be done to write an arbitrary file to the bootsector of a
+floppy disk? First of all the bootimage has to be read from the hard
+disk and stored in memory. Then the buffer containing the bootsector has
+to be written to the floppy disk.&amp;lt;/p&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;&amp;lt;/p&amp;gt;&amp;lt;pre&amp;gt;;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;
+; wbs.asm Write Boot Sector ; ; writes a binary file from harddisk to
+the bootsector of floppy 0 (a:) ; ; compile with NASM to binary file
+(nasm is assumed to be in your path) ; nasm wbs.asm -o wbs.com ; ;
+written by emJay &amp;copy; 1999 last updated 18-06-99 ;
+;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;org 0x100&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;dl&gt;
+&lt;dt&gt;section .text&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;jmp Main&lt;/p&gt;&lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;p&gt;Welcome: db &amp;ldquo;WBS Write Boot Sector v1.0 &amp;copy;1999 emJay.&amp;rdquo;,10,13,&amp;rsquo;\$&amp;rsquo;
+AskInfile: db &amp;ldquo;What is the location of the bootsector on your
+hardisk?&amp;ldquo;,10,13,&amp;rdquo;:\$&amp;rdquo; ErrorOpen: db &amp;ldquo;An error has
+occurred&amp;hellip;..quiting.&amp;ldquo;,10,13,&amp;rsquo;\$&amp;rsquo; OpenSuccess: db &amp;ldquo;File opened
+successfully.&amp;ldquo;,10,13,&amp;rsquo;\$&amp;rsquo; InitSuccess: db &amp;ldquo;Floppy initialised
+successfully.&amp;ldquo;,10,13,&amp;rsquo;\$&amp;rsquo; WriteSuccess: db &amp;ldquo;Bootsector written
+successfully.&amp;ldquo;,10,13,&amp;rsquo;\$&amp;rsquo; Counter: db 3&lt;/p&gt;
+
+&lt;dl&gt;
+&lt;dt&gt;Main:&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;mov ah,0x09 mov dx,Welcome int 0x21 mov dx,AskInfile int 0x21 xor
+si,si&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;InputLoop:&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;mov ah,0x01 int 0x21 cmp al,13 je InputDone mov byte
+[Infile+si],al inc si jmp InputLoop&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;InputDone:&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;mov byte [Infile+si],0 mov ax,0x3d00 mov dx,Infile int 21h jc
+Error&lt;/p&gt;
+
+&lt;p&gt;mov [Handle],ax&lt;/p&gt;
+
+&lt;p&gt;mov ah,0x09 mov dx,OpenSuccess int 0x21&lt;/p&gt;
+
+&lt;p&gt;mov ah,0x3f mov bx,[Handle] mov cx,0x200 mov dx,FileBuffer int
+0x21 mov bx,[Handle] mov ah,0x3e int 0x21&lt;/p&gt;
+
+&lt;p&gt;xor ax,ax mov dl,0 int 0x13 jc Error mov ah,0x09 mov dx,InitSuccess
+int 0x21&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;loop1:&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;mov ah,0 mov dl,0 int 0x13 mov al,1 mov ah,3 mov cx,1 mov dx,0 mov
+bx,FileBuffer int 0x13 jnc WriteOK dec byte [Counter] jz Error jmp
+loop1&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;WriteOK:&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;mov ah,0x09 mov dx,WriteSuccess int 0x21&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;Exit:&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;mov ah,1 mov dl,0 int 0x13 mov al,ah mov ah,0x4c int 0x21&lt;/p&gt;&lt;/dd&gt;
+&lt;dt&gt;Error:&lt;/dt&gt;
+&lt;dd&gt;&lt;p&gt;mov ah,0x09 mov dx,ErrorOpen int 0x21 jmp Exit&lt;/p&gt;&lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;p&gt;section .bss Infile: resb 80 Handle: resb 1 FileBuffer: resb 0x200
+&amp;lt;/pre&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;&amp;lt;/p&amp;gt;&amp;lt;center&amp;gt;&amp;lt;h2&amp;gt;11. All
+sources&amp;lt;/h2&amp;gt;&amp;lt;/center&amp;gt;&amp;lt;ul&amp;gt; &amp;lt;li&amp;gt;&amp;lt;a
+href=&amp;rdquo;&lt;a href=&#34;http://web.archive.org/web/20010424064833/http://www.phys.uu.nl/~mjanssen/osdev/dumbboot.asm&#34;&gt;http://web.archive.org/web/20010424064833/http://www.phys.uu.nl/~mjanssen/osdev/dumbboot.asm&lt;/a&gt;&amp;ldquo;&amp;gt;dumbboot.asm&amp;lt;/a&amp;gt;
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;&amp;lt;a
+href=&amp;rdquo;&lt;a href=&#34;http://web.archive.org/web/20010424064833/http://www.phys.uu.nl/~mjanssen/osdev/dosboot.asm&#34;&gt;http://web.archive.org/web/20010424064833/http://www.phys.uu.nl/~mjanssen/osdev/dosboot.asm&lt;/a&gt;&amp;ldquo;&amp;gt;dosboot.asm&amp;lt;/a&amp;gt;
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;&amp;lt;a
+href=&amp;rdquo;&lt;a href=&#34;http://web.archive.org/web/20010424064833/http://www.phys.uu.nl/~mjanssen/osdev/pmboot.asm&#34;&gt;http://web.archive.org/web/20010424064833/http://www.phys.uu.nl/~mjanssen/osdev/pmboot.asm&lt;/a&gt;&amp;ldquo;&amp;gt;pmboot.asm&amp;lt;/a&amp;gt;
+&amp;lt;/li&amp;gt;&amp;lt;/ul&amp;gt; &amp;lt;center&amp;gt;&amp;lt;h2&amp;gt;12.
+Bibliography&amp;lt;/h2&amp;gt;&amp;lt;/center&amp;gt;&amp;lt;ol type=&amp;ldquo;1&amp;rdquo;&amp;gt;
+&amp;lt;li&amp;gt;Michael Tischer, PC Intern, ISBN 1-55755-145-6 &amp;lt;br&amp;gt; A
+great book on all PC related stuff, it really takes you in depth on a
+large number of subjects. &amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;Lance Leventhal, Lance
+Leventhal&amp;rsquo;s 80386 programming guide, ISBN 90-6233-440-7 &amp;lt;br&amp;gt; The
+most important parts of the intel 80386 manual, I don&amp;rsquo;t know whether the
+ISBN is for the English book or the Dutch translation.
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;Intel Architecture Software Developer&amp;rsquo;s Manual,
+Volume 1: Basic Architecture, Volume 2: Instruction Set Reference,
+Volume 3: System Programming Guide&amp;lt;br&amp;gt; The manual for using Intel
+processors, it covers everything from registers to instruction set and
+Protected Mode. These manuals are downloadable from &amp;lt;a
+href=&amp;rdquo;&lt;a href=&#34;http://web.archive.org/web/20010424064833/http://www.intel.com/&#34;&gt;http://web.archive.org/web/20010424064833/http://www.intel.com/&lt;/a&gt;&amp;ldquo;&amp;gt;Intel&amp;rsquo;s
+web site&amp;lt;/a&amp;gt; (approximatly 10 MB including addenda).
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;Ralph Brown&amp;rsquo;s Interrupt List&amp;lt;br&amp;gt;A complete
+description of all the PC&amp;rsquo;s interrupts (including BIOS and DOS) and a
+description of all hardware ports. A must have for every assembly
+programmer. &amp;lt;/li&amp;gt;&amp;lt;/ol&amp;gt; &amp;lt;center&amp;gt;&amp;lt;h2&amp;gt;13.
+Links&amp;lt;/h2&amp;gt;&amp;lt;/center&amp;gt;&amp;lt;ol&amp;gt; &amp;lt;li&amp;gt;&amp;lt;a
+href=&amp;rdquo;&lt;a href=&#34;http://web.archive.org/web/20010424064833/http://www.webring.org/cgi-bin/webring?ring=os&amp;amp;list&#34;&gt;http://web.archive.org/web/20010424064833/http://www.webring.org/cgi-bin/webring?ring=os&amp;amp;list&lt;/a&gt;&amp;ldquo;
+target=&amp;rdquo;_top&amp;rdquo;&amp;gt;The OS webring&amp;lt;/a&amp;gt;: Links to sites which are
+part of the Operating System webring. It contains a lot of good links.
+&amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;&amp;lt;a
+href=&amp;rdquo;&lt;a href=&#34;http://web.archive.org/web/20010424064833/http://www.intel.com/&#34;&gt;http://web.archive.org/web/20010424064833/http://www.intel.com/&lt;/a&gt;&amp;ldquo;
+target=&amp;rdquo;_top&amp;rdquo;&amp;gt;Intel&amp;rsquo;s web site&amp;lt;/a&amp;gt;: for all information about
+Intel processors, chipsets including datasheets and manuals. It is also
+possible to order a free CD-ROM with the processor manuals and a lot of
+other stuff. &amp;lt;/li&amp;gt;&amp;lt;li&amp;gt;&amp;lt;a
+href=&amp;rdquo;&lt;a href=&#34;http://web.archive.org/web/20010424064833/http://www.pobox.com/~ralf/files.html&#34;&gt;http://web.archive.org/web/20010424064833/http://www.pobox.com/~ralf/files.html&lt;/a&gt;&amp;ldquo;
+target=&amp;rdquo;_top&amp;rdquo;&amp;gt;Ralph Brown&amp;rsquo;s Home Page&amp;lt;/a&amp;gt;: here you can
+download the Ralph Brown Interrupt list which contains all known and
+(unknown) interrupts and a description of their
+usage.&amp;lt;/li&amp;gt;&amp;lt;/ol&amp;gt; &amp;lt;center&amp;gt;&amp;lt;h2&amp;gt;14.
+Warranty&amp;lt;/h2&amp;gt;&amp;lt;/center&amp;gt;I exclude any and all implied
+warranties, including warranties of merchantability and fitness for a
+particular purpose. I make no warranty or representation, either express
+or implied, with respect to this source code, its quality, performance,
+merchantability, or fitness for a particular purpose. I shall have no
+liability for special, incidental, or consequential damages arising out
+of or resulting from the use or modification of this source code.&lt;/p&gt;
+
+&lt;p&gt;Anyway I will by no means accept warranty for any damage caused by using
+information and / or sources found on this web page. So if you f**k
+up, kick yourself!!! &amp;lt;/p&amp;gt;&amp;lt;center&amp;gt;&amp;lt;h2&amp;gt;15. Who am
+I&amp;lt;/h2&amp;gt;&amp;lt;/center&amp;gt;I am a twenty-four year old physics student
+from Utrecht in the Netherlands. My name is emJay (AKA Mark Janssen).
+Contact me at &amp;lt;a
+href=&amp;rdquo;&lt;a href=&#34;mailto:mjanssen@phys.uu.nl&#34;&gt;mailto:mjanssen@phys.uu.nl&lt;/a&gt;&amp;ldquo;&amp;gt;&lt;a href=&#34;mailto:mjanssen@phys.uu.nl&#34;&gt;mjanssen@phys.uu.nl&lt;/a&gt;&amp;lt;/a&amp;gt;&lt;/p&gt;
+
+&lt;p&gt;&amp;lt;center&amp;gt;&amp;lt;h2&amp;gt;16. Update
+history&amp;lt;/h2&amp;gt;&amp;lt;/center&amp;gt;&amp;lt;center&amp;gt; &amp;lt;table
+width=&amp;ldquo;90%&amp;rdquo;&amp;gt; &amp;lt;tbody&amp;gt;&amp;lt;tr&amp;gt;&amp;lt;td&amp;gt;28 March 2000:
+&amp;lt;/td&amp;gt;&amp;lt;td&amp;gt; Added link to OS webring in the links section.
+&amp;lt;/td&amp;gt; &amp;lt;/tr&amp;gt; &amp;lt;tr&amp;gt;&amp;lt;td&amp;gt;14 March 2000:
+&amp;lt;/td&amp;gt;&amp;lt;td&amp;gt; Used PHP3 to make navigation between pages
+possible and create the contents (Yes, it is completly automated).
+&amp;lt;/td&amp;gt; &amp;lt;/tr&amp;gt; &amp;lt;/tbody&amp;gt;&amp;lt;/table&amp;gt; &amp;lt;/center&amp;gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

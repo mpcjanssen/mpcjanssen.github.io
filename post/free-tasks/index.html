@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="generator" content="Hugo 0.33-DEV" />
+
+  <title>Using open source for free tasks &middot; The knights who say NIH!</title>
+
+  
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/pure-min.css">
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/grids-responsive-old-ie-min.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/grids-responsive-min.css">
+  <!--<![endif]-->
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="/css/side-menu-old-ie.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="/css/side-menu.css">
+  <!--<![endif]-->
+
+  <link rel="stylesheet" href="/css/blackburn.css">
+
+  
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+  
+  <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet" type="text/css">
+
+  
+  
+
+  
+
+  <link rel="shortcut icon" href="/img/favicon.ico" type="image/x-icon" />
+
+  
+  
+
+</head>
+
+
+<body>
+<div id="layout">
+
+  
+<a href="#menu" id="menuLink" class="menu-link">
+  
+  <span></span>
+</a>
+<div id="menu">
+
+  
+
+  <div class="pure-menu">
+    <ul class="pure-menu-list">
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/post/"><i class='fa fa-list fa-fw'></i>Posts</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/tags/"><i class='fa fa-tags fa-fw'></i>Tags</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/about/"><i class='fa fa-user fa-fw'></i>About</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/"><i class='fa fa-home fa-fw'></i>Home</a>
+      
+        </li>
+      
+    </ul>
+  </div>
+
+  <div class="pure-menu social">
+  <ul class="pure-menu-list">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <li class="pure-menu-item">
+      <a class="pure-menu-link" href="https://github.com/mpcjanssen" target="_blank"><i class="fa fa-github-square fa-fw"></i>GitHub</a>
+    </li>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  </ul>
+</div>
+
+
+  <div>
+  <div class="small-print">
+    <small></small>
+  </div>
+  <div class="small-print">
+    <small>Built with&nbsp;<a href="https://gohugo.io/" target="_blank">Hugo</a></small>
+    <small>Theme&nbsp;<a href="https://github.com/yoshiharuyamashita/blackburn" target="_blank">Blackburn</a></small>
+  </div>
+</div>
+
+</div>
+
+
+  <div id="main">
+
+
+<div class="header">
+  <h1>Using open source for free tasks</h1>
+  <h2></h2>
+</div>
+<div class="content">
+
+  <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>12 Aug 2017</time>
+  </div>
+
+  
+
+  
+
+  
+
+</div>
+
+  
+
+<h2 id="why-all-the-effort">Why all the effort?</h2>
+
+<p>Online task lists are dissappearing left and right (for example Astrid and Wunderlist). You want your tasks under your control which means:</p>
+
+<ol>
+<li>You have an open file format storing the tasks.</li>
+<li>You can synchronize or serve the tasks with open source tools.</li>
+</ol>
+
+<p>I started with <code>todo.txt</code> to store my tasks. This works fine, but a format like <code>todo.txt</code> has one big disadvantage: it doesn&rsquo;t have a concept of task identity so any syncing solution is flaky.</p>
+
+<p>After some searching I found <a href="https://taskwarrior.org/">Taskwarrior</a> which not only provides a flexible plain text task storage solution, but it also provide a very robust syncing solution with <code>taskd</code>.</p>
+
+<h2 id="the-set-up">The set-up</h2>
+
+<p>I use my own taskd server on a Archlinux based VPS. For now I try to stay away from user defined attributes (UDAs) as much as possible to keep the setup simple.</p>
+
+<h2 id="accessing-the-tasks">Accessing the tasks</h2>
+
+<h3 id="linux-cli">Linux CLI</h3>
+
+<p>For linux installing the taskwarrior cli app provides a very good interface. There are also some other interfaces such as <a href="https://tasktools.org/projects/vit.html">VIT</a> or <a href="https://tasktools.org/projects/tasksh.html">tasksh</a> for review.</p>
+
+<h3 id="windows-cli">Windows CLI</h3>
+
+<p>For windows the <code>task</code> CLI works fine when using the Windows Subsystem For Linux. One disadvantage of this is that you can&rsquo;t access the Linux subsystem commands from a normal Windows command prompt.</p>
+
+<p>To allow this I use a small wrapper executable:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-nim" data-lang="nim"><span style="color:#f92672">import</span> os
+<span style="color:#f92672">import</span> sequtils
+<span style="color:#f92672">import</span> strutils
+
+<span style="color:#75715e"># escape arguments for bash</span>
+<span style="color:#66d9ef">var</span> cmdArgs <span style="color:#f92672">=</span>  commandLineParams().map(<span style="color:#66d9ef">proc</span> (s: <span style="color:#66d9ef">string</span>): <span style="color:#66d9ef">string</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">r&#34;$&#39;&#34;</span> <span style="color:#f92672">&amp;</span> s.replace(<span style="color:#e6db74">r&#34;&#39;&#34;</span>,<span style="color:#e6db74">r&#34;\&#39;&#34;</span>) <span style="color:#f92672">&amp;</span> <span style="color:#e6db74">&#34;&#39;&#34;</span>).join(<span style="color:#e6db74">&#34; &#34;</span>)
+<span style="color:#66d9ef">var</span> shellCmd <span style="color:#f92672">=</span> <span style="color:#e6db74">r&#34;bash -c </span><span style="color:#ae81ff">&#34;&#34;</span><span style="color:#e6db74">task &#34;</span>  <span style="color:#f92672">&amp;</span> cmdArgs <span style="color:#f92672">&amp;</span> <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span>
+quit(os.execShellCmd(shellCmd))</code></pre></div>
+
+<h3 id="web-interface">Web interface</h3>
+
+<p>As a web interface I used <a href="http://inthe.am">inthe.am</a> but even though the code is open source, that site is not under my control and thus could disappear at any time.</p>
+
+<p>Instead I now use <a href="https://github.com/theunraveler/taskwarrior-web">taskwarrior-web</a>. This is intended for localhost usage and as a result has no authentication. To make it safe to open this from my own website, I have put it behind a nginx reverse proxy with basic HTTP authentication.</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-nginx" data-lang="nginx">    <span style="color:#66d9ef">server</span> {
+        <span style="color:#f92672">listen</span> <span style="color:#ae81ff">443</span> <span style="color:#e6db74">ssl</span>;
+        <span style="color:#f92672">ssl_certificate</span> <span style="color:#e6db74">/etc/letsencrypt/live/mpcjanssen.nl/fullchain.pem</span>;
+        <span style="color:#f92672">ssl_certificate_key</span> <span style="color:#e6db74">/etc/letsencrypt/live/mpcjanssen.nl/privkey.pem</span>;
+        <span style="color:#f92672">server_name</span> <span style="color:#e6db74">tasks.mpcjanssen.nl</span>;
+        <span style="color:#f92672">access_log</span> <span style="color:#e6db74">/var/log/nginx/service.tasks.mpcjanssen.nl.access.log</span>;
+        <span style="color:#f92672">error_log</span> <span style="color:#e6db74">/var/log/nginx/service.tasks.mpcjanssen.nl.error.log</span>;
+        <span style="color:#f92672">location</span> <span style="color:#e6db74">/</span> {
+            <span style="color:#f92672">proxy_pass</span> <span style="color:#e6db74">http://127.0.0.1:5678</span>;
+            <span style="color:#f92672">proxy_set_header</span> <span style="color:#e6db74">Host</span> $host;
+            <span style="color:#f92672">proxy_set_header</span> <span style="color:#e6db74">X-Forwarded-Proto</span> $scheme;
+            <span style="color:#f92672">auth_basic</span> <span style="color:#e6db74">&#34;Restricted</span> <span style="color:#e6db74">Content&#34;</span>;
+            <span style="color:#f92672">auth_basic_user_file</span> <span style="color:#e6db74">/etc/nginx/.htpasswd</span>;
+        }
+    }</code></pre></div>
+
+<p>I start the ruby gem itself using the following user systemd script at <code>~/.config/systemd/user/taskweb@.service</code>:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ini" data-lang="ini"><span style="color:#66d9ef">[Unit]</span>
+<span style="color:#a6e22e">Description</span><span style="color:#f92672">=</span><span style="color:#e6db74">Taskwarrior web</span>
+
+<span style="color:#66d9ef">[Service]</span>
+<span style="color:#a6e22e">Type</span><span style="color:#f92672">=</span><span style="color:#e6db74">simple</span>
+<span style="color:#a6e22e">SuccessExitStatus</span><span style="color:#f92672">=</span><span style="color:#e6db74">0 1</span>
+
+<span style="color:#a6e22e">ExecStart</span><span style="color:#f92672">=</span><span style="color:#e6db74">/home/mpcjanssen/.gem/ruby/2.4.0/bin/task-web -o 127.0.0.1 -d -F</span></code></pre></div>
+
+<h3 id="android">Android</h3>
+
+<p>Android has two good clients already <a href="https://play.google.com/store/apps/details?id=kvj.taskw&amp;hl=en">Taskwarrior for Android</a> and <a href="https://play.google.com/store/apps/details?id=com.taskwc2&amp;hl=en">TaskwarriorC2</a>. However they are missing quite some functionallity I have implemented in my <code>todo.txt</code> app Simpletask. So I am planning to support Taskwarrior in Simpletask.</p>
+
+<h2 id="capturing-tasks">Capturing tasks</h2>
+
+<p>For capturing tasks, I either use the CLI tools, or I use the org-protocl browser plugins with a custom org-protocl handler script in Tcl:</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tcl" data-lang="tcl">puts <span style="color:#e6db74">&#34;Handling org-protocol call&#34;</span>
+
+<span style="color:#66d9ef">proc</span> invalidcall <span style="color:#66d9ef">{}</span> <span style="color:#66d9ef">{</span>
+  puts stderr <span style="color:#e6db74">&#34;Invalid org-protocol call $::argv&#34;</span>
+  exit <span style="color:#ae81ff">1</span>
+<span style="color:#66d9ef">}</span>
+
+<span style="color:#66d9ef">proc</span> expandPercent <span style="color:#66d9ef">{</span>data<span style="color:#66d9ef">}</span> <span style="color:#66d9ef">{</span>
+    <span style="color:#66d9ef">set</span> pos <span style="color:#ae81ff">0</span>
+    <span style="color:#66d9ef">while</span> <span style="color:#66d9ef">{</span> -1 <span style="color:#f92672">!=</span> <span style="color:#66d9ef">[set</span> pos <span style="color:#66d9ef">[</span>string first <span style="color:#e6db74">&#34;%&#34;</span> $data $pos<span style="color:#66d9ef">]]}</span> <span style="color:#66d9ef">{</span>
+        <span style="color:#66d9ef">set</span> hexNumber <span style="color:#e6db74">&#34;0x[string range $data $pos+1 $pos+2]&#34;</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#66d9ef">{</span> 4 <span style="color:#f92672">!=</span> <span style="color:#66d9ef">[</span>string length $hexNumber<span style="color:#66d9ef">]</span> <span style="color:#f92672">||</span> <span style="color:#f92672">!</span> <span style="color:#66d9ef">[</span>string is integer $hexNumber<span style="color:#66d9ef">]</span> <span style="color:#66d9ef">}</span> <span style="color:#66d9ef">{</span>
+            <span style="color:#75715e"># No two hex character - eventual error treatment here
+</span><span style="color:#75715e"></span>            <span style="color:#75715e"># at the moment just leave the percent character
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">}</span> <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">{</span>
+            <span style="color:#66d9ef">set</span> data <span style="color:#66d9ef">[</span>string range $data <span style="color:#ae81ff">0</span> $pos-1<span style="color:#66d9ef">][</span>format <span style="color:#f92672">%</span>c $hexNumber<span style="color:#66d9ef">][</span>string range $data $pos<span style="color:#f92672">+</span><span style="color:#ae81ff">3</span> end<span style="color:#66d9ef">]</span>
+        <span style="color:#66d9ef">}</span>
+        incr pos
+    <span style="color:#66d9ef">}</span>
+    <span style="color:#66d9ef">return</span> $data
+<span style="color:#66d9ef">}</span>
+
+<span style="color:#66d9ef">proc</span> handlecapture <span style="color:#66d9ef">{</span>type url title <span style="color:#66d9ef">{</span>text <span style="color:#66d9ef">{}}}</span> <span style="color:#66d9ef">{</span>
+  puts <span style="color:#e6db74">&#34;URL: $url&#34;</span>
+  <span style="color:#66d9ef">set</span> url <span style="color:#66d9ef">[</span>expandPercent $url<span style="color:#66d9ef">]</span>
+  <span style="color:#66d9ef">set</span> title <span style="color:#66d9ef">[</span>string trim <span style="color:#66d9ef">[</span>expandPercent $title<span style="color:#66d9ef">]]</span>
+  <span style="color:#66d9ef">set</span> text <span style="color:#66d9ef">[</span>string trim <span style="color:#66d9ef">[</span>expandPercent $text<span style="color:#66d9ef">]]</span>
+
+  puts <span style="color:#e6db74">&#34;URL: $url&#34;</span>
+  puts <span style="color:#e6db74">&#34;title: $title&#34;</span>
+  puts <span style="color:#e6db74">&#34;text: $text&#34;</span>
+  <span style="color:#75715e"># console show
+</span><span style="color:#75715e"></span>  <span style="color:#75715e"># vwait forever
+</span><span style="color:#75715e"></span>  captureAddTaskwarriorWindows $url $title $text
+  exit <span style="color:#ae81ff">0</span>
+
+<span style="color:#66d9ef">}</span>
+
+<span style="color:#66d9ef">proc</span> captureAddTaskwarriorWindows <span style="color:#66d9ef">{</span>url title text<span style="color:#66d9ef">}</span> <span style="color:#66d9ef">{</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#66d9ef">{[catch</span> <span style="color:#66d9ef">{</span>exec task add $title<span style="color:#66d9ef">}</span> result<span style="color:#66d9ef">]}</span> <span style="color:#66d9ef">{</span>
+	puts $result
+	gets stdin
+    <span style="color:#66d9ef">}</span> <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">{</span>
+      <span style="color:#66d9ef">set</span> taskId <span style="color:#66d9ef">[</span>string range <span style="color:#66d9ef">[</span>lindex <span style="color:#66d9ef">[</span>split $result<span style="color:#66d9ef">]</span> end<span style="color:#66d9ef">]</span> <span style="color:#ae81ff">0</span> end-1<span style="color:#66d9ef">]</span>
+      exec task $taskId annotate Captured url: $url
+    <span style="color:#66d9ef">}</span>
+<span style="color:#66d9ef">}</span>
+
+<span style="color:#66d9ef">proc</span> captureAppendTodoTxt <span style="color:#66d9ef">{</span>url title text<span style="color:#66d9ef">}</span> <span style="color:#66d9ef">{</span>
+  <span style="color:#66d9ef">set</span> f <span style="color:#66d9ef">[</span>open <span style="color:#e6db74">&#34;~/Dropbox/todo/todo.txt&#34;</span> a<span style="color:#66d9ef">]</span>
+  <span style="color:#66d9ef">set</span> timestamp <span style="color:#66d9ef">[</span>clock format <span style="color:#66d9ef">[</span>clock seconds<span style="color:#66d9ef">]</span> <span style="color:#f92672">-</span>format <span style="color:#f92672">%</span>Y-<span style="color:#f92672">%</span>m-<span style="color:#f92672">%</span>d<span style="color:#66d9ef">]</span>
+  puts $f <span style="color:#e6db74">&#34;$timestamp $title $url +orgcapture&#34;</span>
+  close $f
+<span style="color:#66d9ef">}</span>
+
+<span style="color:#66d9ef">if</span> <span style="color:#66d9ef">{</span>$argc <span style="color:#f92672">!=</span> 1<span style="color:#66d9ef">}</span> <span style="color:#66d9ef">{</span>
+  invalidcall
+<span style="color:#66d9ef">}</span>
+
+lassign $argv protocall
+
+<span style="color:#66d9ef">if</span> <span style="color:#66d9ef">{</span><span style="color:#f92672">!</span><span style="color:#66d9ef">([</span>string first org-protocol:<span style="color:#f92672">//</span> $protocall<span style="color:#66d9ef">]</span> <span style="color:#f92672">==</span> 0<span style="color:#66d9ef">)}</span> <span style="color:#66d9ef">{</span>
+  invalidcall
+<span style="color:#66d9ef">}</span>
+
+<span style="color:#66d9ef">set</span> prefixlength <span style="color:#66d9ef">[</span>string length org-protocol:<span style="color:#f92672">//</span><span style="color:#66d9ef">]</span>
+
+<span style="color:#66d9ef">set</span> protocall <span style="color:#66d9ef">[</span>string range $protocall $prefixlength end<span style="color:#66d9ef">]</span>
+
+puts $protocall
+
+<span style="color:#66d9ef">set</span> arguments <span style="color:#66d9ef">[</span>lassign <span style="color:#66d9ef">[</span>split $protocall <span style="color:#f92672">/</span><span style="color:#66d9ef">]</span> action<span style="color:#66d9ef">]</span>
+
+<span style="color:#66d9ef">switch</span> <span style="color:#f92672">-</span>exact <span style="color:#f92672">--</span> $action <span style="color:#66d9ef">{</span>
+  capture<span style="color:#f92672">:</span> <span style="color:#66d9ef">{</span> handlecapture <span style="color:#66d9ef">{</span><span style="color:#f92672">*</span><span style="color:#66d9ef">}</span>$arguments <span style="color:#66d9ef">}</span> 
+  default <span style="color:#66d9ef">{</span> 
+    puts stderr <span style="color:#e6db74">&#34;Unsupported action $action from $argv&#34;</span>
+    exit <span style="color:#ae81ff">1</span>
+  <span style="color:#66d9ef">}</span>
+<span style="color:#66d9ef">}</span></code></pre></div>
+
+<p>To register the handler use:</p>
+
+<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-registry" data-lang="registry"><span style="color:#960050;background-color:#1e0010">REGEDIT4</span>
+
+<span style="color:#66d9ef">[</span><span style="color:#f92672"></span>HKEY_CLASSES_ROOT<span style="color:#66d9ef">\org-protocol]</span>
+<span style="color:#a6e22e">@</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;URL:Org Protocol&#34;</span>
+<span style="color:#a6e22e">&#34;URL Protocol&#34;</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&#34;</span>
+<span style="color:#66d9ef">[</span><span style="color:#f92672"></span>HKEY_CLASSES_ROOT<span style="color:#66d9ef">\org-protocol\shell]</span>
+<span style="color:#66d9ef">[</span><span style="color:#f92672"></span>HKEY_CLASSES_ROOT<span style="color:#66d9ef">\org-protocol\shell\open]</span>
+<span style="color:#66d9ef">[</span><span style="color:#f92672"></span>HKEY_CLASSES_ROOT<span style="color:#66d9ef">\org-protocol\shell\open\command]</span>
+<span style="color:#a6e22e">@</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;\&#34;C:\\Bin\\org-protocol-handler.exe\&#34; \&#34;%1\&#34;&#34;</span></code></pre></div></p>
+
+
+  
+<div class="prev-next-post pure-g">
+  <div class="pure-u-1-24" style="text-align: left;">
+    
+    <a href="/post/back-to-vim/"><i class="fa fa-chevron-left"></i></a>
+    
+  </div>
+  <div class="pure-u-10-24">
+    
+    <nav class="prev">
+      <a href="/post/back-to-vim/">From Vim to Emacs and back again</a>
+    </nav>
+    
+  </div>
+  <div class="pure-u-2-24">
+    &nbsp;
+  </div>
+  <div class="pure-u-10-24">
+    
+  </div>
+  <div class="pure-u-1-24" style="text-align: right;">
+    
+  </div>
+</div>
+
+
+
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'mpcjanssen';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+</div>
+
+</div>
+</div>
+<script src="/js/ui.js"></script>
+
+
+
+
+</body>
+</html>
+
